@@ -1,0 +1,105 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Changes in Compiler Plugins</title><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/changed-features/compiler-plugins.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="index.html">Other Changed Features</a>/<a href="../-other -changed -features/compiler-plugins.html">Changes in Compiler Plugins</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Changes in Compiler Plugins"</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>Compiler plugins are supported by Dotty since 0.9. There are two notable changes compared to <code>scalac</code>:</p> 
+    <ul> 
+     <li>No support for analyzer plugins</li> 
+     <li>Added support for research plugins</li> 
+    </ul> 
+    <p><a href="https://github.com/scala/scala/blob/2.13.x/src/compiler/scala/tools/nsc/typechecker/AnalyzerPlugins.scala">Analyzer plugins</a> in <code>scalac</code> run during type checking and may influence normal type checking. This is a very powerful feature but for production usages, a predictable and consistent type checker is more important.</p> 
+    <p>For experimentation and research, Dotty introduces <em>research plugin</em>. Research plugins are more powerful than <code>scalac</code> analyzer plugins as they let plugin authors customize the whole compiler pipeline. One can easily replace the standard typer by a custom one or create a parser for a domain-specific language. However, research plugins are only enabled for nightly or snaphot releases of Dotty.</p> 
+    <p>Common plugins that add new phases to the compiler pipeline are called <em>standard plugins</em> in Dotty. In terms of features, they are similar to <code>scalac</code> plugins, despite minor changes in the API.</p> 
+    <h2>Using Compiler Plugins</h2> 
+    <p>Both standard and research plugins can be used with <code>scalac</code> by adding the <code>-Xplugin:</code> option:</p> 
+    <pre><code class="language-shell">scalac -Xplugin:pluginA.jar -Xplugin:pluginB.jar Test.scala
+</code></pre> 
+    <p>The compiler will examine the jar provided, and look for a property file named <code>plugin.properties</code> in the root directory of the jar. The property file specifies the fully qualified plugin class name. The format of a property file is as follows:</p> 
+    <pre><code class="language-properties">pluginClass=dividezero.DivideZero
+</code></pre> 
+    <p>This is different from <code>scalac</code> plugins that required a <code>scalac-plugin.xml</code> file.</p> 
+    <p>Starting from 1.1.5, <code>sbt</code> also supports Dotty compiler plugins. Please refer to the <code>sbt</code> <a href="https://www.scala-sbt.org/1.x/docs/Compiler-Plugins.html">documentation</a> for more information.</p> 
+    <h2>Writing a Standard Compiler Plugin</h2> 
+    <p>Here is the source code for a simple compiler plugin that reports integer divisions by zero as errors.</p> 
+    <pre><code class="language-scala">package dividezero
+
+import dotty.tools.dotc.ast.Trees._
+import dotty.tools.dotc.ast.tpd
+import dotty.tools.dotc.core.Constants.Constant
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Decorators._
+import dotty.tools.dotc.core.StdNames._
+import dotty.tools.dotc.core.Symbols._
+import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
+import dotty.tools.dotc.transform.{Pickler, Staging}
+
+class DivideZero extends StandardPlugin {
+  val name: String = "divideZero"
+  override val description: String = "divide zero check"
+
+  def init(options: List[String]): List[PluginPhase] = (new DivideZeroPhase) :: Nil
+}
+
+class DivideZeroPhase extends PluginPhase {
+  import tpd._
+
+  val phaseName = "divideZero"
+
+  override val runsAfter = Set(Pickler.name)
+  override val runsBefore = Set(Staging.name)
+
+  override def transformApply(tree: Apply)(implicit ctx: Context): Tree = {
+    tree match {
+      case Apply(Select(rcvr, nme.DIV), List(Literal(Constant(0))))
+          if rcvr.tpe &lt;:&lt; defn.IntType =&gt;
+        report.error("dividing by zero", tree.pos)
+      case _ =&gt;
+        ()
+    }
+    tree
+  }
+}
+</code></pre> 
+    <p>The plugin main class (<code>DivideZero</code>) must extend the trait <code>StandardPlugin</code> and implement the method <code>init</code> that takes the plugin's options as argument and returns a list of <code>PluginPhase</code>s to be inserted into the compilation pipeline.</p> 
+    <p>Our plugin adds one compiler phase to the pipeline. A compiler phase must extend the <code>PluginPhase</code> trait. In order to specify when the phase is executed, we also need to specify a <code>runsBefore</code> and <code>runsAfter</code> constraints that are list of phase names.</p> 
+    <p>We can now transform trees by overriding methods like <code>transformXXX</code>.</p> 
+    <h2>Writing a Research Compiler Plugin</h2> 
+    <p>Here is a template for research plugins.</p> 
+    <pre><code class="language-scala">import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Phases.Phase
+import dotty.tools.dotc.plugins.ResearchPlugin
+
+class DummyResearchPlugin extends ResearchPlugin {
+  val name: String = "dummy"
+  override val description: String = "dummy research plugin"
+
+  def init(options: List[String], phases: List[List[Phase]])(implicit ctx: Context): List[List[Phase]] =
+    phases
+}
+</code></pre> 
+    <p>A research plugin must extend the trait <code>ResearchPlugin</code> and implement the method <code>init</code> that takes the plugin's options as argument as well as the compiler pipeline in the form of a list of compiler phases. The method can replace, remove or add any phases to the pipeline and return the updated pipeline.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

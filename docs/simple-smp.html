@@ -1,0 +1,193 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>The Meta-theory of Symmetric Metaprogramming</title><script type="text/javascript" src="../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../styles/nord-light.css"></link><link rel="stylesheet" href="../styles/scalastyle.css"></link><link rel="stylesheet" href="../styles/dotty-icons.css"></link><link rel="stylesheet" href="../styles/diagram.css"></link><link rel="stylesheet" href="../styles/filter-bar.css"></link><link rel="stylesheet" href="../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../styles/filter-bar.css"></link><script type="text/javascript" src="../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../scripts/data.js" defer="true"></script><script type="text/javascript" src="../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../css/bootstrap.min.css"></link><link rel="stylesheet" href="../css/dottydoc.css"></link><link rel="stylesheet" href="../css/color-brewer.css"></link><script type="text/javascript" src="../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/metaprogramming/simple-smp.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="index.html"></a>/<a href="simple-smp.html">The Meta-theory of Symmetric Metaprogramming</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"The Meta-theory of Symmetric Metaprogramming"</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>This note presents a simplified variant of <a href="./macros.md">principled metaprogramming</a> and sketches its soundness proof. The variant treats only dialogues between two stages. A program can have quotes which can contain splices (which can contain quotes, which can contain splices, and so on). Or the program could start with a splice with embedded quotes. The essential restriction is that (1) a term can contain top-level quotes or top-level splices, but not both, and (2) quotes cannot appear directly inside quotes and splices cannot appear directly inside splices. In other words, the universe is restricted to two phases only.</p> 
+    <p>Under this restriction we can simplify the typing rules so that there are always exactly two environments instead of having a stack of environments. The variant presented here differs from the full calculus also in that we replace evaluation contexts with contextual typing rules. While this is more verbose, it makes it easier to set up the meta theory.</p> 
+    <h2>Syntax</h2> 
+    <pre><code>Terms         t  ::=  x                 variable
+                      (x: T) =&gt; t       lambda
+                      t t               application
+                      ’t                quote
+                      ~t                splice
+
+Simple terms  u  ::=  x  |  (x: T) =&gt; u  |  u u
+
+Values        v  ::=  (x: T) =&gt; t       lambda
+                      ’u                quoted value
+
+Types         T  ::=  A                 base type
+                      T -&gt; T            function type
+                      ’T                quoted type
+</code></pre> 
+    <h2>Operational semantics</h2> 
+    <h3>Evaluation</h3> 
+    <pre><code>            ((x: T) =&gt; t) v  --&gt;  [x := v]t
+
+                         t1  --&gt;  t2
+                       ---------------
+                       t1 t  --&gt;  t2 t
+
+                         t1  --&gt;  t2
+                       ---------------
+                       v t1  --&gt;  v t2
+
+                         t1  ==&gt;  t2
+                        -------------
+                        ’t1  --&gt;  ’t2
+</code></pre> 
+    <h3>Splicing</h3> 
+    <pre><code>                        ~’u  ==&gt;  u
+
+                         t1  ==&gt;  t2
+               -------------------------------
+               (x: T) =&gt; t1  ==&gt;  (x: T) =&gt; t2
+
+                         t1  ==&gt;  t2
+                       ---------------
+                       t1 t  ==&gt;  t2 t
+
+                         t1  ==&gt;  t2
+                       ---------------
+                       u t1  ==&gt;  u t2
+
+                         t1  --&gt;  t2
+                        -------------
+                        ~t1  ==&gt;  ~t2
+
+</code></pre> 
+    <h2>Typing Rules</h2> 
+    <p>Typing judgments are of the form <code>E1 * E2 |- t: T</code> where <code>E1, E2</code> are environments and <code>*</code> is one of <code>~</code> and <code>’</code>.</p> 
+    <pre><code>                          x: T in E2
+                       ---------------
+                       E1 * E2 |- x: T
+
+
+                   E1 * E2, x: T1 |- t: T2
+               --------------------------------
+               E1 * E2 |- (x: T1) =&gt; t: T -&gt; T2
+
+
+         E1 * E2 |- t1: T2 -&gt; T    E1 * E2 |- t2: T2
+         -------------------------------------------
+                     E1 * E2 |- t1 t2: T
+
+
+                       E2 ’ E1 |- t: T
+                      -----------------
+                      E1 ~ E2 |- ’t: ’T
+
+
+                       E2 ~ E1 |- t: ’T
+                       ----------------
+                       E1 ’ E2 |- ~t: T
+</code></pre> 
+    <p>(Curiously, this looks a bit like a Christmas tree).</p> 
+    <h2>Soundness</h2> 
+    <p>The meta-theory typically requires mutual inductions over two judgments.</p> 
+    <h3>Progress Theorem</h3> 
+    <ol> 
+     <li>If <code>E1 ~ |- t: T</code> then either <code>t = v</code> for some value <code>v</code> or <code>t --&gt; t2</code> for some term <code>t2</code>.</li> 
+     <li>If <code>’ E2 |- t: T</code> then either <code>t = u</code> for some simple term <code>u</code> or <code>t ==&gt; t2</code> for some term <code>t2</code>.</li> 
+    </ol> 
+    <p>Proof by structural induction over terms.</p> 
+    <p>To prove (1):</p> 
+    <ul> 
+     <li>the cases for variables, lambdas and applications are as in STL.</li> 
+     <li>If <code>t = ’t2</code>, then by inversion we have <code>’ E1 |- t2: T2</code> for some type <code>T2</code>. By the second I.H., we have one of: 
+      <ul> 
+       <li><code>t2 = u</code>, hence <code>’t2</code> is a value,</li> 
+       <li><code>t2 ==&gt; t3</code>, hence <code>’t2 --&gt; ’t3</code>.</li> 
+      </ul> </li> 
+     <li>The case <code>t = ~t2</code> is not typable.</li> 
+    </ul> 
+    <p>To prove (2):</p> 
+    <ul> 
+     <li> <p>If <code>t = x</code> then <code>t</code> is a simple term.</p> </li> 
+     <li> <p>If <code>t = (x: T) =&gt; t2</code>, then either <code>t2</code> is a simple term, in which case <code>t</code> is as well. Or by the second I.H. <code>t2 ==&gt; t3</code>, in which case <code>t ==&gt; (x: T) =&gt; t3</code>.</p> </li> 
+     <li> <p>If <code>t = t1 t2</code> then one of three cases applies:</p> 
+      <ul> 
+       <li><code>t1</code> and <code>t2</code> are a simple term, then <code>t</code> is as well a simple term.</li> 
+       <li><code>t1</code> is not a simple term. Then by the second IH, <code>t1 ==&gt; t12</code>, hence <code>t ==&gt; t12 t2</code>.</li> 
+       <li><code>t1</code> is a simple term but <code>t2</code> is not. Then by the second IH. <code>t2 ==&gt; t22</code>, hence <code>t ==&gt; t1 t22</code>.</li> 
+      </ul> </li> 
+     <li> <p>The case <code>t = ’t2</code> is not typable.</p> </li> 
+     <li> <p>If <code>t = ~t2</code> then by inversion we have <code>E2 ~ |- t2: ’T2</code>, for some type <code>T2</code>. By the first I.H., we have one of</p> 
+      <ul> 
+       <li><code>t2 = v</code>. Since <code>t2: ’T2</code>, we must have <code>v = ’u</code>, for some simple term <code>u</code>, hence <code>t = ~’u</code>. By quote-splice reduction, <code>t ==&gt; u</code>.</li> 
+       <li><code>t2 --&gt; t3</code>. Then by the context rule for <code>’t</code>, <code>t ==&gt; ’t3</code>.</li> 
+      </ul> </li> 
+    </ul> 
+    <h3>Substitution Lemma</h3> 
+    <ol> 
+     <li>If <code>E1 ~ E2 |- s: S</code> and <code>E1 ~ E2, x: S |- t: T</code> then <code>E1 ~ E2 |- [x := s]t: T</code>.</li> 
+     <li>If <code>E1 ~ E2 |- s: S</code> and <code>E2, x: S ’ E1 |- t: T</code> then <code>E2 ’ E1 |- [x := s]t: T</code>.</li> 
+    </ol> 
+    <p>The proofs are by induction on typing derivations for <code>t</code>, analogous to the proof for STL (with (2) a bit simpler than (1) since we do not need to swap lambda bindings with the bound variable <code>x</code>). The arguments that link the two hypotheses are as follows.</p> 
+    <p>To prove (1), let <code>t = ’t1</code>. Then <code>T = ’T1</code> for some type <code>T1</code> and the last typing rule is</p> 
+    <pre><code>                    E2, x: S ’ E1 |- t1: T1
+                   -------------------------
+                   E1 ~ E2, x: S |- ’t1: ’T1
+</code></pre> 
+    <p>By the second I.H. <code>E2 ’ E1 |- [x := s]t1: T1</code>. By typing, <code>E1 ~ E2 |- ’[x := s]t1: ’T1</code>. Since <code>[x := s]t = [x := s](’t1) = ’[x := s]t1</code> we get <code>[x := s]t: ’T1</code>.</p> 
+    <p>To prove (2), let <code>t = ~t1</code>. Then the last typing rule is</p> 
+    <pre><code>                    E1 ~ E2, x: S |- t1: ’T
+                    -----------------------
+                    E2, x: S ’ E1 |- ~t1: T
+</code></pre> 
+    <p>By the first I.H., <code>E1 ~ E2 |- [x := s]t1: ’T</code>. By typing, <code>E2 ’ E1 |- ~[x := s]t1: T</code>. Since <code>[x := s]t = [x := s](~t1) = ~[x := s]t1</code> we get <code>[x := s]t: T</code>.</p> 
+    <h3>Preservation Theorem</h3> 
+    <ol> 
+     <li>If <code>E1 ~ E2 |- t1: T</code> and <code>t1 --&gt; t2</code> then <code>E1 ~ E2 |- t2: T</code>.</li> 
+     <li>If <code>E1 ’ E2 |- t1: T</code> and <code>t1 ==&gt; t2</code> then <code>E1 ’ E2 |- t2: T</code>.</li> 
+    </ol> 
+    <p>The proof is by structural induction on evaluation derivations. The proof of (1) is analogous to the proof for STL, using the substitution lemma for the beta reduction case, with the addition of reduction of quoted terms, which goes as follows:</p> 
+    <ul> 
+     <li>Assume the last rule was <pre><code>                    t1  ==&gt;  t2
+                   -------------
+                   ’t1  --&gt;  ’t2
+</code></pre> <p>By inversion of typing rules, we must have <code>T = ’T1</code> for some type <code>T1</code> such that <code>t1: T1</code>. By the second I.H., <code>t2: T1</code>, hence <code>’t2:</code>T1`.</p> </li> 
+    </ul> 
+    <p>To prove (2):</p> 
+    <ul> 
+     <li> <p>Assume the last rule was <code>~’u ==&gt; u</code>. The typing proof of <code>~’u</code> must have the form</p> <pre><code>                  E1 ’ E2 |- u: T
+                 -----------------
+                 E1 ~ E2 |- ’u: ’T
+                 -----------------
+                 E1 ’ E2 |- ~’u: T
+</code></pre> <p>Hence, <code>E1 ’ E2 |- u: T</code>.</p> </li> 
+     <li> <p>Assume the last rule was</p> <pre><code>                      t1  ==&gt;  t2
+            -------------------------------
+            (x: S) =&gt; t1  ==&gt;  (x: T) =&gt; t2
+</code></pre> <p>By typing inversion, <code>E1 ' E2, x: S |- t1: T1</code> for some type <code>T1</code> such that <code>T = S -&gt; T1</code>. By the I.H, <code>t2: T1</code>. By the typing rule for lambdas the result follows.</p> </li> 
+     <li> <p>The context rules for applications are equally straightforward.</p> </li> 
+     <li> <p>Assume the last rule was</p> <pre><code>                      t1  ==&gt;  t2
+                     -------------
+                     ~t1  ==&gt;  ~t2
+</code></pre> <p>By inversion of typing rules, we must have <code>t1: ’T</code>. By the first I.H., <code>t2: ’T</code>, hence <code>~t2: T</code>.</p> </li> 
+    </ul> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../scripts/pages.js"></script><script type="text/javascript" src="../scripts/main.js"></script></body></html>

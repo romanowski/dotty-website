@@ -1,0 +1,65 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Dotc&apos;s concept of time</title><script type="text/javascript" src="../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../styles/nord-light.css"></link><link rel="stylesheet" href="../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/diagram.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../styles/filter-bar.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../css/dottydoc.css"></link><link rel="stylesheet" href="../../css/color-brewer.css"></link><script type="text/javascript" src="../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/internals/periods.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../index.html"></a>/<a href="index.html">Internals</a>/<a href="../-internals/periods.html">Dotc's concept of time</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Dotc's concept of time"</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>Conceptually, the <code>scalac</code> compiler's job is to maintain views of various artifacts associated with source code at all points in time. But what is <em>time</em> for <code>scalac</code>? In fact, it is a combination of compiler runs and compiler phases.</p> 
+    <p>The <em>hours</em> of the compiler's clocks are measured in compiler <a href="https://github.com/lampepfl/dotty/blob/a527f3b1e49c0d48148ccfb2eb52e3302fc4a349/compiler/src/dotty/tools/dotc/Run.scala">runs</a>. Every run creates a new hour, which follows all the compiler runs (hours) that happened before. <code>scalac</code> is designed to be used as an incremental compiler that can support incremental builds, as well as interactions in an IDE and a REPL. This means that new runs can occur quite frequently. At the extreme, every keystroke in an editor or REPL can potentially launch a new compiler run, so potentially an "hour" of compiler time might take only a fraction of a second in real time.</p> 
+    <p>The <em>minutes</em> of the compiler's clocks are measured in phases. At every compiler run, the compiler cycles through a number of <a href="https://github.com/lampepfl/dotty/blob/a527f3b1e49c0d48148ccfb2eb52e3302fc4a349/compiler/src/dotty/tools/dotc/core/Phases.scala">phases</a>. The list of phases is defined in the [Compiler]object There are currently about 60 phases per run, so the minutes/hours analogy works out roughly. After every phase the view the compiler has of the world changes: trees are transformed, types are gradually simplified from Scala types to JVM types, definitions are rearranged, and so on.</p> 
+    <p>Many pieces in the information compiler are time-dependent. For instance, a Scala symbol representing a definition has a type, but that type will usually change as one goes from the higher-level Scala view of things to the lower-level JVM view. There are different ways to deal with this. Many compilers change the type of a symbol destructively according to the "current phase". Another, more functional approach might be to have different symbols representing the same definition at different phases, which each symbol carrying a different immutable type. <code>scalac</code> employs yet another scheme, which is inspired by functional reactive programming (FRP): Symbols carry not a single type, but a function from compiler phase to type. So the type of a symbol is a time-indexed function, where time ranges over compiler phases.</p> 
+    <p>Typically, the definition of a symbol or other quantity remains stable for a number of phases. This leads us to the concept of a <a href="https://github.com/lampepfl/dotty/blob/a527f3b1e49c0d48148ccfb2eb52e3302fc4a349/compiler/src/dotty/tools/dotc/core/Periods.scala">period</a>. Conceptually, period is an interval of some given phases in a given compiler run. Periods are conceptually represented by three pieces of information</p> 
+    <ul> 
+     <li>the ID of the current run,</li> 
+     <li>the ID of the phase starting the period</li> 
+     <li>the number of phases in the period</li> 
+    </ul> 
+    <p>All three pieces of information are encoded in a value class over a 32 bit integer. Here's the API for class <code>Period</code>:</p> 
+    <pre><code class="language-scala">class Period(val code: Int) extends AnyVal {
+  def runId: RunId            // The run identifier of this period.
+  def firstPhaseId: PhaseId   // The first phase of this period
+  def lastPhaseId: PhaseId    // The last phase of this period
+  def phaseId: PhaseId        // The phase identifier of this single-phase period
+
+  def containsPhaseId(id: PhaseId): Boolean
+  def contains(that: Period): Boolean
+  def overlaps(that: Period): Boolean
+
+  def &amp; (that: Period): Period
+  def | (that: Period): Period
+}
+</code></pre> 
+    <p>We can access the parts of a period using <code>runId</code>, <code>firstPhaseId</code>, <code>lastPhaseId</code>, or using <code>phaseId</code> for periods consisting only of a single phase. They return <code>RunId</code> or <code>PhaseId</code> values, which are aliases of <code>Int</code>. <code>containsPhaseId</code>, <code>contains</code> and <code>overlaps</code> test whether a period contains a phase or a period as a sub-interval, or whether the interval overlaps with another period. Finally, <code>&amp;</code> and <code>|</code> produce the intersection and the union of two period intervals (the union operation <code>|</code> takes as <code>runId</code> the <code>runId</code> of its left operand, as periods spanning different <code>runId</code>s cannot be constructed.</p> 
+    <p>Periods are constructed using two <code>apply</code> methods:</p> 
+    <pre><code class="language-scala">object Period {
+  /** The single-phase period consisting of given run id and phase id */
+  def apply(rid: RunId, pid: PhaseId): Period
+
+  /** The period consisting of given run id, and lo/hi phase ids */
+  def apply(rid: RunId, loPid: PhaseId, hiPid: PhaseId): Period
+}
+</code></pre> 
+    <p>As a sentinel value there's <code>Nowhere</code>, a period that is empty.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../scripts/pages.js"></script><script type="text/javascript" src="../../scripts/main.js"></script></body></html>

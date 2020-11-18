@@ -1,0 +1,60 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Dropped: Package Objects</title><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/dropped-features/package-objects.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="index.html">Dropped Features</a>/<a href="../-dropped -features/package-objects.html">Dropped: Package Objects</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Dropped: Package Objects"</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>Package objects</p> 
+    <pre><code class="language-scala">package object p {
+  val a = ...
+  def b = ...
+}
+</code></pre> 
+    <p>will be dropped. They are still available in Scala 3.0, but will be deprecated and removed afterwards.</p> 
+    <p>Package objects are no longer needed since all kinds of definitions can now be written at the top-level. E.g.</p> 
+    <pre><code class="language-scala">package p
+type Labelled[T] = (String, T)
+val a: Labelled[Int] = ("count", 1)
+def b = a._2
+
+case class C()
+
+implicit object Cops {
+  extension (x: C) def pair(y: C) = (x, y)
+}
+</code></pre> 
+    <p>There may be several source files in a package containing such toplevel definitions, and source files can freely mix toplevel value, method, and type definitions with classes and objects.</p> 
+    <p>The compiler generates synthetic objects that wrap toplevel definitions falling into one of the following categories:</p> 
+    <ul> 
+     <li>all pattern, value, method, and type definitions,</li> 
+     <li>implicit classes and objects,</li> 
+     <li>companion objects of opaque type aliases.</li> 
+    </ul> 
+    <p>If a source file <code>src.scala</code> contains such toplevel definitions, they will be put in a synthetic object named <code>src$package</code>. The wrapping is transparent, however. The definitions in <code>src</code> can still be accessed as members of the enclosing package.</p> 
+    <p><strong>Note 1:</strong> This means that the name of a source file containing wrapped toplevel definitions is relevant for binary compatibility. If the name changes, so does the name of the generated object and its class.</p> 
+    <p><strong>Note 2:</strong> A toplevel main method <code>def main(args: Array[String]): Unit = ...</code> is wrapped as any other method. If it appears in a source file <code>src.scala</code>, it could be invoked from the command line using a command like <code>scala src$package</code>. Since the "program name" is mangled it is recommended to always put <code>main</code> methods in explicitly named objects.</p> 
+    <p><strong>Note 3:</strong> The notion of <code>private</code> is independent of whether a definition is wrapped or not. A <code>private</code> toplevel definition is always visible from everywhere in the enclosing package.</p> 
+    <p><strong>Note 4:</strong> If several toplevel definitions are overloaded variants with the same name, they must all come from the same source file.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

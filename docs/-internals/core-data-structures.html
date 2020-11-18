@@ -1,0 +1,71 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Core Data Structures</title><script type="text/javascript" src="../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../styles/nord-light.css"></link><link rel="stylesheet" href="../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/diagram.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../styles/filter-bar.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../css/dottydoc.css"></link><link rel="stylesheet" href="../../css/color-brewer.css"></link><script type="text/javascript" src="../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/internals/core-data-structures.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../index.html"></a>/<a href="index.html">Internals</a>/<a href="../-internals/core-data-structures.html">Core Data Structures</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>Core Data Structures</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>(The following is work in progress)</p> 
+    <h2>Symbols and SymDenotations</h2> 
+    <ul> 
+     <li>why symbols are not enough: their contents change all the time</li> 
+     <li>they change themselvesSo a <code>Symbol</code></li> 
+     <li>reference: string + sig</li> 
+    </ul> 
+    <p>Dotc is different from most other compilers in that it is centered around the idea of maintaining views of various artifacts associated with code. These views are indexed by tne</p> 
+    <p>A symbol refers to a definition in a source program. Traditionally, compilers store context-dependent data in a <em>symbol table</em>. The symbol then is the central reference to address context-dependent data. But for <code>scalac</code>'s requirements it turns out that symbols are both too little and too much for this task.</p> 
+    <p>Too little: The attributes of a symbol depend on the phase. Examples: Types are gradually simplified by several phases. Owners are changed in phases <code>LambdaLift</code> (when methods are lifted out to an enclosing class) and Flatten (when all classes are moved to top level). Names are changed when private members need to be accessed from outside their class (for instance from a nested class or a class implementing a trait). So a functional compiler, a <code>Symbol</code> by itself met mean much. Instead we are more interested in the attributes of a symbol at a given phase.</p> 
+    <p><code>scalac</code> has a concept for "attributes of a symbol at</p> 
+    <p>Too much: If a symbol is used to refer to a definition in another compilation unit, we get problems for incremental recompilation. The unit containing the symbol might be changed and recompiled, which might mean that the definition referred to by the symbol is deleted or changed. This leads to the problem of stale symbols that refer to definitions that no longer exist in this form. Scala 2 compiler tried to address this problem by <em>rebinding</em> symbols appearing in certain cross module references, but it turned out to be too difficult to do this reliably for all kinds of references. Scala 3 compiler attacks the problem at the root instead. The fundamental problem is that symbols are too specific to serve as a cross-module reference in a system with incremental compilation. They refer to a particular definition, but that definition may not persist unchanged after an edit.</p> 
+    <p><code>scalac</code> uses instead a different approach: A cross module reference is always type, either a <code>TermRef</code> or <code>TypeRef</code>. A reference type contains a prefix type and a name. The definition the type refers to is established dynamically based on these fields.</p> 
+    <p>a system where sources can be recompiled at any instance,</p> 
+    <p>the concept of a <code>Denotation</code>.</p> 
+    <p>Since definitions are transformed by phases,</p> 
+    <p>The <a href="https://github.com/lampepfl/dotty">Dotty project</a> is a platform to develop new technology for Scala tooling and to try out concepts of future Scala language versions. Its compiler is a new design intended to reflect the lessons we learned from work with the Scala compiler. A clean redesign today will let us iterate faster with new ideas in the future.</p> 
+    <p>Today we reached an important milestone: The Dotty compiler can compile itself, and the compiled compiler can act as a drop-in for the original one. This is what one calls a <em>bootstrap</em>.</p> 
+    <h2>Why is this important?</h2> 
+    <p>The main reason is that this gives us a some validation of the <em>trustworthiness</em> of the compiler itself. Compilers are complex beasts, and many things can go wrong. By far the worst things that can go wrong are bugs where incorrect code is produced. It's not fun debugging code that looks perfectly fine, yet gets translated to something subtly wrong by the compiler.</p> 
+    <p>Having the compiler compile itself is a good test to demonstrate that the generated code has reached a certain level of quality. Not only is a compiler a large program (44k lines in the case of dotty), it is also one that exercises a large part of the language in quite intricate ways. Moreover, bugs in the code of a compiler don't tend to go unnoticed, precisely because every part of a compiler feeds into other parts and all together are necessary to produce a correct translation.</p> 
+    <h2>Are We Done Yet?</h2> 
+    <p>Far from it! The compiler is still very rough. A lot more work is needed to</p> 
+    <ul> 
+     <li>make it more robust, in particular when analyzing incorrect programs,</li> 
+     <li>improve error messages and warnings,</li> 
+     <li>improve the efficiency of some of the generated code,</li> 
+     <li>embed it in external tools such as sbt, REPL, IDEs,</li> 
+     <li>remove restrictions on what Scala code can be compiled,</li> 
+     <li>help in migrating Scala code that will have to be changed.</li> 
+    </ul> 
+    <h2>What Are the Next Steps?</h2> 
+    <p>Over the coming weeks and months, we plan to work on the following topics:</p> 
+    <ul> 
+     <li>Make snapshot releases.</li> 
+     <li>Get the Scala standard library to compile.</li> 
+     <li>Work on SBT integration of the compiler.</li> 
+     <li>Work on IDE support.</li> 
+     <li>Investigate the best way to obtaining a REPL.</li> 
+     <li>Work on the build infrastructure.</li> 
+    </ul> 
+    <p>If you want to get your hands dirty with any of this, now is a good moment to get involved! To get started: <a href="https://github.com/lampepfl/dotty">https://github.com/lampepfl/dotty</a>.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../scripts/pages.js"></script><script type="text/javascript" src="../../scripts/main.js"></script></body></html>

@@ -1,0 +1,64 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Classpaths</title><script type="text/javascript" src="../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../styles/nord-light.css"></link><link rel="stylesheet" href="../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/diagram.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../styles/filter-bar.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../css/dottydoc.css"></link><link rel="stylesheet" href="../../css/color-brewer.css"></link><script type="text/javascript" src="../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/internals/classpaths.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../index.html"></a>/<a href="index.html">Internals</a>/<a href="../-internals/classpaths.html">Classpaths</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>Classpaths</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>When ran from the <code>dotty</code> script, this is the classloader stack:</p> 
+    <pre><code>=====================================================
+class sun.misc.Launcher$AppClassLoader  &lt;= corresponds to java.class.path
+sun.misc.Launcher$AppClassLoader@591ce4fe
+file:/mnt/data-local/Work/Workspace/dev-2.11/dotty/target/scala-2.11.0-M7/dotty_2.11.0-M7-0.1-SNAPSHOT.jar:file:/home/sun/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.11.0-M7.jar:file:/home/sun/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.11.0-M7.jar
+=====================================================
+class sun.misc.Launcher$ExtClassLoader  &lt;= corresponds to sun.boot.class.path
+sun.misc.Launcher$ExtClassLoader@77fe0d66
+file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/sunpkcs11.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/localedata.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/zipfs.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/sunec.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/sunjce_provider.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/dnsns.jar
+=====================================================
+</code></pre> 
+    <p>When running from sbt or Eclipse, the classloader stack is:</p> 
+    <pre><code>=====================================================
+class sbt.classpath.ClasspathUtilities$$anon$1
+sbt.classpath.ClasspathUtilities$$anon$1@22a29f97
+file:/mnt/data-local/Work/Workspace/dev-2.11/dotty/target/scala-2.11.0-M7/classes/:file:/home/sun/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.11.0-M7.jar:file:/home/sun/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.11.0-M7.jar:file:/home/sun/.ivy2/cache/org.scala-lang.modules/scala-xml_2.11.0-M7/bundles/scala-xml_2.11.0-M7-1.0.0-RC7.jar
+=====================================================
+class java.net.URLClassLoader
+java.net.URLClassLoader@2167c879
+file:/home/sun/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.11.0-M7.jar:file:/home/sun/.ivy2/cache/org.scala-lang/scala-compiler/jars/scala-compiler-2.11.0-M7.jar:file:/home/sun/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.11.0-M7.jar:file:/home/sun/.ivy2/cache/org.scala-lang.modules/scala-xml_2.11.0-M6/bundles/scala-xml_2.11.0-M6-1.0.0-RC6.jar:file:/home/sun/.ivy2/cache/org.scala-lang.modules/scala-parser-combinators_2.11.0-M6/bundles/scala-parser-combinators_2.11.0-M6-1.0.0-RC4.jar:file:/home/sun/.ivy2/cache/jline/jline/jars/jline-2.11.jar
+=====================================================
+class xsbt.boot.BootFilteredLoader
+xsbt.boot.BootFilteredLoader@73c74402
+not a URL classloader
+=====================================================
+class sun.misc.Launcher$AppClassLoader  &lt;= corresponds to java.class.path
+sun.misc.Launcher$AppClassLoader@612dcb8c
+file:/home/sun/.sbt/.lib/0.13.0/sbt-launch.jar
+=====================================================
+class sun.misc.Launcher$ExtClassLoader  &lt;= corresponds to sun.boot.class.path
+sun.misc.Launcher$ExtClassLoader@58e862c
+file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/sunpkcs11.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/localedata.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/zipfs.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/sunec.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/sunjce_provider.jar:file:/usr/lib/jvm/java-7-oracle/jre/lib/ext/dnsns.jar
+=====================================================
+</code></pre> 
+    <p>Since scala/dotty only pick up <code>java.class.path</code> and <code>sun.boot.class.path</code>, it's clear why Dotty crashes in sbt and Eclipse unless we set the boot classpath explicitly.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../scripts/pages.js"></script><script type="text/javascript" src="../../scripts/main.js"></script></body></html>

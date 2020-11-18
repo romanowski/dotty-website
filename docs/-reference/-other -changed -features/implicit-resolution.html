@@ -1,0 +1,130 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Changes in Implicit Resolution</title><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/changed-features/implicit-resolution.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="index.html">Other Changed Features</a>/<a href="../-other -changed -features/implicit-resolution.html">Changes in Implicit Resolution</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Changes in Implicit Resolution"</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>This page describes changes to the implicit resolution that apply both to the new <code>given</code>s and to the old-style <code>implicit</code>s in Dotty. Implicit resolution uses a new algorithm which caches implicit results more aggressively for performance. There are also some changes that affect implicits on the language level.</p> 
+    <p><strong>1.</strong> Types of implicit values and result types of implicit methods must be explicitly declared. Excepted are only values in local blocks where the type may still be inferred:</p> 
+    <pre><code class="language-scala">   class C {
+
+   val ctx: Context = ...        // ok
+
+   /*!*/ implicit val x = ...    // error: type must be given explicitly
+
+   /*!*/ implicit def y = ...    // error: type must be given explicitly
+
+   val y = {
+      implicit val ctx = this.ctx // ok
+      ...
+   }
+</code></pre> 
+    <p><strong>2.</strong> Nesting is now taken into account for selecting an implicit.Consider for instance the following scenario:</p> 
+    <pre><code class="language-scala">  def f(implicit i: C) = {
+    def g(implicit j: C) = {
+      implicitly[C]
+    }
+  }
+</code></pre> 
+    <p>This will now resolve the <code>implicitly</code> call to <code>j</code>, because <code>j</code> is nested more deeply than <code>i</code>. Previously, this would have resulted in an ambiguity error. The previous possibility of an implicit search failure due to <em>shadowing</em> (where an implicit is hidden by a nested definition) no longer applies.</p> 
+    <p><strong>3.</strong> Package prefixes no longer contribute to the implicit search scope of a type. Example:</p> 
+    <pre><code class="language-scala">  package p
+  given a as A
+
+  object o {
+    given b as B
+    type C
+  }
+</code></pre> 
+    <p>Both <code>a</code> and <code>b</code> are visible as implicits at the point of the definition of <code>type C</code>. However, a reference to <code>p.o.C</code> outside of package <code>p</code> will have only <code>b</code> in its implicit search scope but not <code>a</code>.</p> 
+    <p>In more detail, here are the rules for what constitutes the implicit scope of a type:</p> 
+    <p><strong>Definition:</strong> A reference is an <em>anchor</em> if it refers to an object, a class, a trait, an abstract type, an opaque type alias, or a match type alias. References to packages and package objects are anchors only under -source:3.0-migration.</p> 
+    <p><strong>Definition:</strong> The <em>anchors</em> of a type <em>T</em> is a set of references defined as follows:</p> 
+    <ol> 
+     <li>If <em>T</em> is a reference to an anchor, <em>T</em> itself plus, if <em>T</em> is of the form <em>P#A</em>, the anchors of <em>P</em>.</li> 
+     <li>If <em>T</em> is an alias of <em>U</em>, the anchors of <em>U</em>.</li> 
+     <li>If <em>T</em> is a reference to a type parameter, the union of the anchors of both of its bounds.</li> 
+     <li>If <em>T</em> is a singleton reference, the anchors of its underlying type, plus, if <em>T</em> is of the form <em>(P#x).type</em>, the anchors of <em>P</em>.</li> 
+     <li>If <em>T</em> is the this-type <em>o.this</em> of a static object <em>o</em>, the anchors of a term reference <em>o.type</em> to that object.</li> 
+     <li>If <em>T</em> is some other type, the union of the anchors of each constituent type of <em>T</em>.</li> 
+    </ol> 
+    <p><strong>Definition:</strong> The <em>implicit scope</em> of a type <em>T</em> is the smallest set <em>S</em> of term references such that</p> 
+    <ol> 
+     <li>If <em>T</em> is a reference to a class, <em>S</em> includes a reference to the companion object of the class, if it exists, as well as the implicit scopes of all of <em>T</em>'s parent classes.</li> 
+     <li>If <em>T</em> is a reference to an object, <em>S</em> includes <em>T</em> itself as well as the implicit scopes of all of <em>T</em>'s parent classes.</li> 
+     <li>If <em>T</em> is a reference to an opaque type alias named <em>A</em>, <em>S</em> includes a reference to an object <em>A</em> defined in the same scope as the type, if it exists, as well as the implicit scope of <em>T</em>'s underlying type or bounds.</li> 
+     <li>If <em>T</em> is a reference to an an abstract type or match type alias named <em>A</em>, <em>S</em> includes a reference to an object <em>A</em> defined in the same scope as the type, if it exists, as well as the implicit scopes of <em>T</em>'s given bounds.</li> 
+     <li>If <em>T</em> is a reference to an anchor of the form <em>p.A</em> then <em>S</em> also includes all term references on the path <em>p</em>.</li> 
+     <li>If <em>T</em> is some other type, <em>S</em> includes the implicit scopes of all anchors of <em>T</em>.</li> 
+    </ol> 
+    <p><strong>4.</strong> The treatment of ambiguity errors has changed. If an ambiguity is encountered in some recursive step of an implicit search, the ambiguity is propagated to the caller.</p> 
+    <p>Example: Say you have the following definitions:</p> 
+    <pre><code class="language-scala">  class A
+  class B extends C
+  class C
+  implicit def a1: A
+  implicit def a2: A
+  implicit def b(implicit a: A): B
+  implicit def c: C
+</code></pre> 
+    <p>and the query <code>implicitly[C]</code>.</p> 
+    <p>This query would now be classified as ambiguous. This makes sense, after all there are two possible solutions, <code>b(a1)</code> and <code>b(a2)</code>, neither of which is better than the other and both of which are better than the third solution, <code>c</code>. By contrast, Scala 2 would have rejected the search for <code>A</code> as ambiguous, and subsequently have classified the query <code>b(implicitly[A])</code> as a normal fail, which means that the alternative <code>c</code> would be chosen as solution!</p> 
+    <p>Scala 2's somewhat puzzling behavior with respect to ambiguity has been exploited to implement the analogue of a "negated" search in implicit resolution, where a query <code>Q1</code> fails if some other query <code>Q2</code> succeeds and <code>Q1</code> succeeds if <code>Q2</code> fails. With the new cleaned up behavior these techniques no longer work. But there is now a new special type <code>scala.util.Not</code> which implements negation directly. For any query type <code>Q</code>: <code>Not[Q]</code> succeeds if and only if the implicit search for <code>Q</code> fails.</p> 
+    <p><strong>5.</strong> The treatment of divergence errors has also changed. A divergent implicit is treated as a normal failure, after which alternatives are still tried. This also makes sense: Encountering a divergent implicit means that we assume that no finite solution can be found on the corresponding path, but another path can still be tried. By contrast, most (but not all) divergence errors in Scala 2 would terminate the implicit search as a whole.</p> 
+    <p><strong>6.</strong> Scala-2 gives a lower level of priority to implicit conversions with call-by-name parameters relative to implicit conversions with call-by-value parameters. Dotty drops this distinction. So the following code snippet would be ambiguous in Dotty:</p> 
+    <pre><code class="language-scala">  implicit def conv1(x: Int): A = new A(x)
+  implicit def conv2(x: =&gt; Int): A = new A(x)
+  def buzz(y: A) = ???
+  buzz(1)   // error: ambiguous
+</code></pre> 
+    <p><strong>7.</strong> The rule for picking a <em>most specific</em> alternative among a set of overloaded or implicit alternatives is refined to take context parameters into account. All else being equal, an alternative that takes some context parameters is taken to be less specific than an alternative that takes none. If both alternatives take context parameters, we try to choose between them as if they were methods with regular parameters. The following paragraph in the SLS is affected by this change:</p> 
+    <p><em>Original version:</em></p> 
+    <blockquote> 
+     <p>An alternative A is <em>more specific</em> than an alternative B if the relative weight of A over B is greater than the relative weight of B over A.</p> 
+    </blockquote> 
+    <p><em>Modified version:</em></p> 
+    <p>An alternative A is <em>more specific</em> than an alternative B if</p> 
+    <ul> 
+     <li>the relative weight of A over B is greater than the relative weight of B over A, or</li> 
+     <li>the relative weights are the same, and A takes no implicit parameters but B does, or</li> 
+     <li>the relative weights are the same, both A and B take implicit parameters, and A is more specific than B if all implicit parameters in either alternative are replaced by regular parameters.</li> 
+    </ul> 
+    <p><strong>8.</strong> The previous disambiguation of implicits based on inheritance depth is refined to make it transitive. Transitivity is important to guarantee that search outcomes are compilation-order independent. Here's a scenario where the previous rules violated transitivity:</p> 
+    <pre><code class="language-scala">  class A extends B
+  object A { given a ... }
+  class B
+  object B extends C { given b ... }
+  class C { given c }
+</code></pre> 
+    <p>Here <code>a</code> is more specific than <code>b</code> since the companion class <code>A</code> is a subclass of the companion class <code>B</code>. Also, <code>b</code> is more specific than <code>c</code> since <code>object B</code> extends class <code>C</code>. But <code>a</code> is not more specific than <code>c</code>. This means if <code>a, b, c</code> are all applicable implicits, it makes a difference in what order they are compared. If we compare <code>b</code> and <code>c</code> first, we keep <code>b</code> and drop <code>c</code>. Then, comparing <code>a</code> with <code>b</code> we keep <code>a</code>. But if we compare <code>a</code> with <code>c</code> first, we fail with an ambiguity error.</p> 
+    <p>The new rules are as follows: An implicit <code>a</code> defined in <code>A</code> is more specific than an implicit <code>b</code> defined in <code>B</code> if</p> 
+    <ul> 
+     <li><code>A</code> extends <code>B</code>, or</li> 
+     <li><code>A</code> is an object and the companion class of <code>A</code> extends <code>B</code>, or</li> 
+     <li><code>A</code> and <code>B</code> are objects, <code>B</code> does not inherit any implicit members from base classes (*), and the companion class of <code>A</code> extends the companion class of <code>B</code>.</li> 
+    </ul> 
+    <p>Condition (*) is new. It is necessary to ensure that the defined relation is transitive.</p> 
+    <p>[//]: # todo: expand with precise rules</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

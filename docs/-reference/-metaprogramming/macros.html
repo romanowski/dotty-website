@@ -1,0 +1,492 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Macros</title><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/metaprogramming/macros.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="index.html">Metaprogramming</a>/<a href="../-metaprogramming/macros.html">Macros</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Macros"</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <h3>Macros: Quotes and Splices</h3> 
+    <p>Macros are built on two well-known fundamental operations: quotation and splicing. Quotation is expressed as <code>'{...}</code> for expressions and as <code>'[...]</code> for types. Splicing is expressed as <code>${ ... }</code>. Additionally, within a quote or a splice we can quote or splice identifiers directly (i.e. <code>'e</code> and <code>$e</code>). Readers may notice the resemblance of the two aforementioned syntactic schemes with the familiar string interpolation syntax.</p> 
+    <pre><code class="language-scala">println(s"Hello, $name, here is the result of 1 + 1 = ${1 + 1}")
+</code></pre> 
+    <p>In string interpolation we <em>quoted</em> a string and then we <em>spliced</em> into it, two others. The first, <code>name</code>, is a reference to a value of type <code>string</code>, and the second is an arithmetic expression that will be <em>evaluated</em> followed by the splicing of its string representation.</p> 
+    <p>Quotes and splices in this section allow us to treat code in a similar way, effectively supporting macros. The entry point for macros is an inline method with a top-level splice. We call it a top-level because it is the only occasion where we encounter a splice outside a quote (consider as a quote the compilation-unit at the call-site). For example, the code below presents an <code>inline</code> method <code>assert</code> which calls at compile-time a method <code>assertImpl</code> with a boolean expression tree as argument. <code>assertImpl</code> evaluates the expression and prints it again in an error message if it evaluates to <code>false</code>.</p> 
+    <pre><code class="language-scala">import scala.quoted._
+
+inline def assert(inline expr: Boolean): Unit =
+  ${ assertImpl('expr) }
+
+def assertImpl(expr: Expr[Boolean])(using QuoteContext) = '{
+  if (!$expr)
+    throw new AssertionError(s"failed assertion: ${${ showExpr(expr) }}")
+}
+
+def showExpr(expr: Expr[Boolean])(using QuoteContext): Expr[String] =
+  '{ "&lt;some source code&gt;" } // Better implementation later in this document
+</code></pre> 
+    <p>If <code>e</code> is an expression, then <code>'{e}</code> represents the typed abstract syntax tree representing <code>e</code>. If <code>T</code> is a type, then <code>'[T]</code> represents the type structure representing <code>T</code>. The precise definitions of "typed abstract syntax tree" or "type-structure" do not matter for now, the terms are used only to give some intuition. Conversely, <code>${e}</code> evaluates the expression <code>e</code>, which must yield a typed abstract syntax tree or type structure, and embeds the result as an expression (respectively, type) in the enclosing program.</p> 
+    <p>Quotations can have spliced parts in them; in this case the embedded splices are evaluated and embedded as part of the formation of the quotation.</p> 
+    <p>Quotes and splices can also be applied directly to identifiers. An identifier <code>$x</code> starting with a <code>$</code> that appears inside a quoted expression or type is treated as a splice <code>${x}</code>. Analogously, an quoted identifier <code>'x</code> that appears inside a splice is treated as a quote <code>'{x}</code>. See the Syntax section below for details.</p> 
+    <p>Quotes and splices are duals of each other. For arbitrary expressions <code>e</code> and types <code>T</code> we have:</p> 
+    <pre><code>${'{e}} = e
+'{${e}} = e
+${'[T]} = T
+'[${T}] = T
+</code></pre> 
+    <h3>Types for Quotations</h3> 
+    <p>The type signatures of quotes and splices can be described using two fundamental types:</p> 
+    <ul> 
+     <li><code>Expr[T]</code>: abstract syntax trees representing expressions of type <code>T</code></li> 
+     <li><code>Type[T]</code>: type structures representing type <code>T</code>.</li> 
+    </ul> 
+    <p>Quoting takes expressions of type <code>T</code> to expressions of type <code>Expr[T]</code> and it takes types <code>T</code> to expressions of type <code>Type[T]</code>. Splicing takes expressions of type <code>Expr[T]</code> to expressions of type <code>T</code> and it takes expressions of type <code>Type[T]</code> to types <code>T</code>.</p> 
+    <p>The two types can be defined in package <code>scala.quoted</code> as follows:</p> 
+    <pre><code class="language-scala">package scala.quoted
+
+sealed abstract class Expr[+T]
+sealed abstract class Type[T]
+</code></pre> 
+    <p>Both <code>Expr</code> and <code>Type</code> are abstract and sealed, so all constructors for these types are provided by the system. One way to construct values of these types is by quoting, the other is by type-specific lifting operations that will be discussed later on.</p> 
+    <h3>The Phase Consistency Principle</h3> 
+    <p>A fundamental <em>phase consistency principle</em> (PCP) regulates accesses to free variables in quoted and spliced code:</p> 
+    <ul> 
+     <li><em>For any free variable reference <code>x</code>, the number of quoted scopes and the number of spliced scopes between the reference to <code>x</code> and the definition of <code>x</code> must be equal</em>.</li> 
+    </ul> 
+    <p>Here, <code>this</code>-references count as free variables. On the other hand, we assume that all imports are fully expanded and that <code>_root_</code> is not a free variable. So references to global definitions are allowed everywhere.</p> 
+    <p>The phase consistency principle can be motivated as follows: First, suppose the result of a program <code>P</code> is some quoted text <code>'{ ... x ... }</code> that refers to a free variable <code>x</code> in <code>P</code>. This can be represented only by referring to the original variable <code>x</code>. Hence, the result of the program will need to persist the program state itself as one of its parts. We don’t want to do this, hence this situation should be made illegal. Dually, suppose a top-level part of a program is a spliced text <code>${ ... x ... }</code> that refers to a free variable <code>x</code> in <code>P</code>. This would mean that we refer during <em>construction</em> of <code>P</code> to a value that is available only during <em>execution</em> of <code>P</code>. This is of course impossible and therefore needs to be ruled out. Now, the small-step evaluation of a program will reduce quotes and splices in equal measure using the cancellation rules above. But it will neither create nor remove quotes or splices individually. So the PCP ensures that program elaboration will lead to neither of the two unwanted situations described above.</p> 
+    <p>In what concerns the range of features it covers, this form of macros introduces a principled metaprogramming framework that is quite close to the MetaML family of languages. One difference is that MetaML does not have an equivalent of the PCP</p> 
+    <ul> 
+     <li>quoted code in MetaML <em>can</em> access variables in its immediately enclosing environment, with some restrictions and caveats since such accesses involve serialization. However, this does not constitute a fundamental gain in expressiveness.</li> 
+    </ul> 
+    <h3>From <code>Expr</code>s to Functions and Back</h3> 
+    <p>It is possible to convert any <code>Expr[T =&gt; R]</code> into <code>Expr[T] =&gt; Expr[R]</code> and back. These conversions can be implemented as follows:</p> 
+    <pre><code class="language-scala">def to[T: Type, R: Type](f: Expr[T] =&gt; Expr[R])(using QuoteContext): Expr[T =&gt; R] =
+  '{ (x: T) =&gt; ${ f('x) } }
+
+def from[T: Type, R: Type](f: Expr[T =&gt; R])(using QuoteContext): Expr[T] =&gt; Expr[R] =
+  (x: Expr[T]) =&gt; '{ $f($x) }
+</code></pre> 
+    <p>Note how the fundamental phase consistency principle works in two different directions here for <code>f</code> and <code>x</code>. In the method <code>to</code>, the reference to <code>f</code> is legal because it is quoted, then spliced, whereas the reference to <code>x</code> is legal because it is spliced, then quoted.</p> 
+    <p>They can be used as follows:</p> 
+    <pre><code class="language-scala">val f1: Expr[Int =&gt; String] = to((x: Expr[Int]) =&gt; '{ $x.toString }) // '{ (x: Int) =&gt; x.toString }
+
+val f2: Expr[Int] =&gt; Expr[String] = from('{ (x: Int) =&gt; x.toString }) // (x: Expr[Int]) =&gt; '{ ((x: Int) =&gt; x.toString)($x) }
+f2('{2}) // '{ ((x: Int) =&gt; x.toString)(2) }
+</code></pre> 
+    <p>One limitation of <code>from</code> is that it does not β-reduce when a lambda is called immediately, as evidenced in the code <code>{ ((x: Int) =&gt; x.toString)(2) }</code>. In some cases we want to remove the lambda from the code, for this we provide the method <code>Expr.betaReduce</code> that turns a tree describing a function into a function mapping trees to trees.</p> 
+    <pre><code class="language-scala">object Expr {
+  ...
+  def betaReduce[...](...)(...): ... = ...
+}
+</code></pre> 
+    <p>The definition of <code>Expr.betaReduce(f)(x)</code> is assumed to be functionally the same as <code>'{($f)($x)}</code>, however it should optimize this call by returning the result of beta-reducing <code>f(x)</code> if <code>f</code> is a known lambda expression. <code>Expr.betaReduce</code> distributes applications of <code>Expr</code> over function arrows:</p> 
+    <pre><code class="language-scala">Expr.betaReduce(_): Expr[(T1, ..., Tn) =&gt; R] =&gt; ((Expr[T1], ..., Expr[Tn]) =&gt; Expr[R])
+</code></pre> 
+    <h3>Lifting Types</h3> 
+    <p>Types are not directly affected by the phase consistency principle. It is possible to use types defined at any level in any other level. But, if a type is used in a subsequent stage it will need to be lifted to a <code>Type</code>. The resulting value of <code>Type</code> will be subject to PCP. Indeed, the definition of <code>to</code> above uses <code>T</code> in the next stage, there is a quote but no splice between the parameter binding of <code>T</code> and its usage. But the code can be rewritten by adding a binding of a <code>Type[T]</code> tag:</p> 
+    <pre><code class="language-scala">def to[T, R](f: Expr[T] =&gt; Expr[R])(using Type[T], Type[R], QuoteContext): Expr[T =&gt; R] =
+  '{ (x: T) =&gt; ${ f('x) } }
+</code></pre> 
+    <p>In this version of <code>to</code>, the type of <code>x</code> is now the result of splicing the <code>Type</code> value <code>t</code>. This operation <em>is</em> splice correct -- there is one quote and one splice between the use of <code>t</code> and its definition.</p> 
+    <p>To avoid clutter, the Scala implementation tries to convert any type reference to a type <code>T</code> in subsequent phases to a type-splice, by rewriting <code>T</code> to <code>summon[Type[T]].Underlying</code>. For instance, the user-level definition of <code>to</code>:</p> 
+    <pre><code class="language-scala">def to[T, R](f: Expr[T] =&gt; Expr[R])(using t: Type[T], r: Type[R], QuoteContext): Expr[T =&gt; R] =
+  '{ (x: T) =&gt; ${ f('x) } }
+</code></pre> 
+    <p>would be rewritten to</p> 
+    <pre><code class="language-scala">def to[T, R](f: Expr[T] =&gt; Expr[R])(using t: Type[T], r: Type[R], QuoteContext): Expr[T =&gt; R] =
+  '{ (x: t.Underlying }) =&gt; ${ f('x) } }
+</code></pre> 
+    <p>The <code>summon</code> query succeeds because there is a given instance of type <code>Type[T]</code> available (namely the given parameter corresponding to the context bound <code>: Type</code>), and the reference to that value is phase-correct. If that was not the case, the phase inconsistency for <code>T</code> would be reported as an error.</p> 
+    <h3>Lifting Expressions</h3> 
+    <p>Consider the following implementation of a staged interpreter that implements a compiler through staging.</p> 
+    <pre><code class="language-scala">import scala.quoted._
+
+enum Exp {
+  case Num(n: Int)
+  case Plus(e1: Exp, e2: Exp)
+  case Var(x: String)
+  case Let(x: String, e: Exp, in: Exp)
+}
+</code></pre> 
+    <p>The interpreted language consists of numbers <code>Num</code>, addition <code>Plus</code>, and variables <code>Var</code> which are bound by <code>Let</code>. Here are two sample expressions in the language:</p> 
+    <pre><code class="language-scala">val exp = Plus(Plus(Num(2), Var("x")), Num(4))
+val letExp = Let("x", Num(3), exp)
+</code></pre> 
+    <p>Here’s a compiler that maps an expression given in the interpreted language to quoted Scala code of type <code>Expr[Int]</code>. The compiler takes an environment that maps variable names to Scala <code>Expr</code>s.</p> 
+    <pre><code class="language-scala">import scala.quoted._
+
+def compile(e: Exp, env: Map[String, Expr[Int]])(using QuoteContext): Expr[Int] = e match {
+  case Num(n) =&gt;
+    Expr(n)
+  case Plus(e1, e2) =&gt;
+    '{ ${ compile(e1, env) } + ${ compile(e2, env) } }
+  case Var(x) =&gt;
+    env(x)
+  case Let(x, e, body) =&gt;
+    '{ val y = ${ compile(e, env) }; ${ compile(body, env + (x -&gt; 'y)) } }
+}
+</code></pre> 
+    <p>Running <code>compile(letExp, Map())</code> would yield the following Scala code:</p> 
+    <pre><code class="language-scala">'{ val y = 3; (2 + y) + 4 }
+</code></pre> 
+    <p>The body of the first clause, <code>case Num(n) =&gt; Expr(n)</code>, looks suspicious. <code>n</code> is declared as an <code>Int</code>, yet it is converted to an <code>Expr[Int]</code> with <code>Expr()</code>. Shouldn’t <code>n</code> be quoted? In fact this would not work since replacing <code>n</code> by <code>'n</code> in the clause would not be phase correct.</p> 
+    <p>The <code>Expr.apply</code> method is defined in package <code>quoted</code>:</p> 
+    <pre><code class="language-scala">package quoted
+
+object Expr {
+  ...
+  def apply[T: Liftable](x: T)(using QuoteContext): Expr[T] = summon[Liftable[T]].toExpr(x)
+  ...
+}
+</code></pre> 
+    <p>This method says that values of types implementing the <code>Liftable</code> type class can be converted ("lifted") to <code>Expr</code> values using <code>Expr.apply</code>.</p> 
+    <p>Dotty comes with given instances of <code>Liftable</code> for several types including <code>Boolean</code>, <code>String</code>, and all primitive number types. For example, <code>Int</code> values can be converted to <code>Expr[Int]</code> values by wrapping the value in a <code>Literal</code> tree node. This makes use of the underlying tree representation in the compiler for efficiency. But the <code>Liftable</code> instances are nevertheless not <em>magic</em> in the sense that they could all be defined in a user program without knowing anything about the representation of <code>Expr</code> trees. For instance, here is a possible instance of <code>Liftable[Boolean]</code>:</p> 
+    <pre><code class="language-scala">given Liftable[Boolean] {
+  def toExpr(b: Boolean) =
+    if (b) '{ true } else '{ false }
+}
+</code></pre> 
+    <p>Once we can lift bits, we can work our way up. For instance, here is a possible implementation of <code>Liftable[Int]</code> that does not use the underlying tree machinery:</p> 
+    <pre><code class="language-scala">given Liftable[Int] {
+  def toExpr(n: Int) = n match {
+    case Int.MinValue    =&gt; '{ Int.MinValue }
+    case _ if n &lt; 0      =&gt; '{ - ${ toExpr(-n) } }
+    case 0               =&gt; '{ 0 }
+    case _ if n % 2 == 0 =&gt; '{ ${ toExpr(n / 2) } * 2 }
+    case _               =&gt; '{ ${ toExpr(n / 2) } * 2 + 1 }
+  }
+}
+</code></pre> 
+    <p>Since <code>Liftable</code> is a type class, its instances can be conditional. For example, a <code>List</code> is liftable if its element type is:</p> 
+    <pre><code class="language-scala">given [T: Liftable : Type] as Liftable[List[T]] {
+  def toExpr(xs: List[T]) = xs match {
+    case head :: tail =&gt; '{ ${ Expr(head) } :: ${ toExpr(tail) } }
+    case Nil =&gt; '{ Nil: List[T] }
+  }
+}
+</code></pre> 
+    <p>In the end, <code>Liftable</code> resembles very much a serialization framework. Like the latter it can be derived systematically for all collections, case classes and enums. Note also that the synthesis of <em>type-tag</em> values of type <code>Type[T]</code> is essentially the type-level analogue of lifting.</p> 
+    <p>Using lifting, we can now give the missing definition of <code>showExpr</code> in the introductory example:</p> 
+    <pre><code class="language-scala">def showExpr[T](expr: Expr[T])(using QuoteContext): Expr[String] = {
+  val code: String = expr.show
+  Expr(code)
+}
+</code></pre> 
+    <p>That is, the <code>showExpr</code> method converts its <code>Expr</code> argument to a string (<code>code</code>), and lifts the result back to an <code>Expr[String]</code> using <code>Expr.apply</code>.</p> 
+    <h3>Lifting Types</h3> 
+    <p>The previous section has shown that the metaprogramming framework has to be able to take a type <code>T</code> and convert it to a type tree of type <code>Type[T]</code> that can be reified. This means that all free variables of the type tree refer to types and values defined in the current stage.</p> 
+    <p>For a reference to a global class, this is easy: Just issue the fully qualified name of the class. Members of reifiable types are handled by just reifying the containing type together with the member name. But what to do for references to type parameters or local type definitions that are not defined in the current stage? Here, we cannot construct the <code>Type[T]</code> tree directly, so we need to get it from a recursive implicit search. For instance, to implement</p> 
+    <pre><code class="language-scala">summon[Type[List[T]]]
+</code></pre> 
+    <p>where <code>T</code> is not defined in the current stage, we construct the type constructor of <code>List</code> applied to the splice of the result of searching for a given instance for <code>Type[T]</code>:</p> 
+    <pre><code class="language-scala">'[ List[ ${ summon[Type[T]] } ] ]
+</code></pre> 
+    <p>This is exactly the algorithm that Scala 2 uses to search for type tags. In fact Scala 2's type tag feature can be understood as a more ad-hoc version of <code>quoted.Type</code>. As was the case for type tags, the implicit search for a <code>quoted.Type</code> is handled by the compiler, using the algorithm sketched above.</p> 
+    <h3>Relationship with Inline</h3> 
+    <p>Seen by itself, principled metaprogramming looks more like a framework for runtime metaprogramming than one for compile-time metaprogramming with macros. But combined with Dotty’s <code>inline</code> feature it can be turned into a compile-time system. The idea is that macro elaboration can be understood as a combination of a macro library and a quoted program. For instance, here’s the <code>assert</code> macro again together with a program that calls <code>assert</code>.</p> 
+    <pre><code class="language-scala">object Macros {
+
+  inline def assert(inline expr: Boolean): Unit =
+    ${ assertImpl('expr) }
+
+  def assertImpl(expr: Expr[Boolean])(using QuoteContext) =
+    val failMsg: Expr[String] = Expr("failed assertion: " + expr.show)
+    '{ if !($expr) then throw new AssertionError($failMsg) }
+}
+
+object App {
+  val program = {
+    val x = 1
+    Macros.assert(x != 0)
+  }
+}
+</code></pre> 
+    <p>Inlining the <code>assert</code> function would give the following program:</p> 
+    <pre><code class="language-scala">val program = {
+  val x = 1
+  ${ Macros.assertImpl('{ x != 0) } }
+}
+</code></pre> 
+    <p>The example is only phase correct because <code>Macros</code> is a global value and as such not subject to phase consistency checking. Conceptually that’s a bit unsatisfactory. If the PCP is so fundamental, it should be applicable without the global value exception. But in the example as given this does not hold since both <code>assert</code> and <code>program</code> call <code>assertImpl</code> with a splice but no quote.</p> 
+    <p>However, one could argue that the example is really missing an important aspect: The macro library has to be compiled in a phase prior to the program using it, but in the code above, macro and program are defined together. A more accurate view of macros would be to have the user program be in a phase after the macro definitions, reflecting the fact that macros have to be defined and compiled before they are used. Hence, conceptually the program part should be treated by the compiler as if it was quoted:</p> 
+    <pre><code class="language-scala">val program = '{
+  val x = 1
+  ${ Macros.assertImpl('{ x != 0 }) }
+}
+</code></pre> 
+    <p>If <code>program</code> is treated as a quoted expression, the call to <code>Macro.assertImpl</code> becomes phase correct even if macro library and program are conceptualized as local definitions.</p> 
+    <p>But what about the call from <code>assert</code> to <code>assertImpl</code>? Here, we need a tweak of the typing rules. An inline function such as <code>assert</code> that contains a splice operation outside an enclosing quote is called a <em>macro</em>. Macros are supposed to be expanded in a subsequent phase, i.e. in a quoted context. Therefore, they are also type checked as if they were in a quoted context. For instance, the definition of <code>assert</code> is typechecked as if it appeared inside quotes. This makes the call from <code>assert</code> to <code>assertImpl</code> phase-correct, even if we assume that both definitions are local.</p> 
+    <p>The <code>inline</code> modifier is used to declare a <code>val</code> that is either a constant or is a parameter that will be a constant when instantiated. This aspect is also important for macro expansion.</p> 
+    <p>To get values out of expressions containing constants <code>Expr</code> provides the method <code>unlift</code> (or <code>unliftOrError</code>). This will convert the <code>Expr[T]</code> into a <code>Some[T]</code> (or <code>T</code>) when the expression contains value. Otherwise it will retrun <code>None</code> (or emit an error). To avoid having incidental val bindings generated by the inlining of the <code>def</code> it is recommended to use an inline parameter. To illustrate this, consider an implementation of the <code>power</code> function that makes use of a statically known exponent:</p> 
+    <pre><code class="language-scala">inline def power(x: Double, inline n: Int) = ${ powerCode('x, 'n) }
+
+private def powerCode(x: Expr[Double], n: Expr[Int])(using QuoteContext): Expr[Double] =
+  n.unlift match
+    case Some(m) =&gt; powerCode(x, m)
+    case None =&gt; '{ Math.pow($x, $y) }
+
+private def powerCode(x: Expr[Double], n: Int)(using QuoteContext): Expr[Double] =
+  if (n == 0) '{ 1.0 }
+  else if (n == 1) x
+  else if (n % 2 == 0) '{ val y = $x * $x; ${ powerCode('y, n / 2) } }
+  else '{ $x * ${ powerCode(x, n - 1) } }
+</code></pre> 
+    <h3>Scope Extrusion</h3> 
+    <p>Quotes and splices are duals as far as the PCP is concerned. But there is an additional restriction that needs to be imposed on splices to guarantee soundness: code in splices must be free of side effects. The restriction prevents code like this:</p> 
+    <pre><code class="language-scala">var x: Expr[T] = ...
+'{ (y: T) =&gt; ${ x = 'y; 1 } }
+</code></pre> 
+    <p>This code, if it was accepted, would <em>extrude</em> a reference to a quoted variable <code>y</code> from its scope. This would subsequently allow access to a variable outside the scope where it is defined, which is likely problematic. The code is clearly phase consistent, so we cannot use PCP to rule it out. Instead we postulate a future effect system that can guarantee that splices are pure. In the absence of such a system we simply demand that spliced expressions are pure by convention, and allow for undefined compiler behavior if they are not. This is analogous to the status of pattern guards in Scala, which are also required, but not verified, to be pure.</p> 
+    <p><a href="./staging.md">Multi-Stage Programming</a> introduces one additional method where you can expand code at runtime with a method <code>run</code>. There is also a problem with that invokation of <code>run</code> in splices. Consider the following expression:</p> 
+    <pre><code class="language-scala">'{ (x: Int) =&gt; ${ run('x); 1 } }
+</code></pre> 
+    <p>This is again phase correct, but will lead us into trouble. Indeed, evaluating the splice will reduce the expression <code>run('x)</code> to <code>x</code>. But then the result</p> 
+    <pre><code class="language-scala">'{ (x: Int) =&gt; ${ x; 1 } }
+</code></pre> 
+    <p>is no longer phase correct. To prevent this soundness hole it seems easiest to classify <code>run</code> as a side-effecting operation. It would thus be prevented from appearing in splices. In a base language with side effects we would have to do this anyway: Since <code>run</code> runs arbitrary code it can always produce a side effect if the code it runs produces one.</p> 
+    <h3>Example Expansion</h3> 
+    <p>Assume we have two methods, one <code>map</code> that takes an <code>Expr[Array[T]]</code> and a function <code>f</code> and one <code>sum</code> that performs a sum by delegating to <code>map</code>.</p> 
+    <pre><code class="language-scala">object Macros {
+  def map[T](arr: Expr[Array[T]], f: Expr[T] =&gt; Expr[Unit])(using Type[T], QuoteContext): Expr[Unit] = '{
+    var i: Int = 0
+    while (i &lt; ($arr).length) {
+      val element: T = ($arr)(i)
+      ${f('element)}
+      i += 1
+    }
+  }
+
+  def sum(arr: Expr[Array[Int]])(using QuoteContext): Expr[Int] = '{
+    var sum = 0
+    ${ map(arr, x =&gt; '{sum += $x}) }
+    sum
+  }
+
+  inline def sum_m(arr: Array[Int]): Int = ${sum('arr)}
+}
+</code></pre> 
+    <p>A call to <code>sum_m(Array(1,2,3))</code> will first inline <code>sum_m</code>:</p> 
+    <pre><code class="language-scala">val arr: Array[Int] = Array.apply(1, [2,3 : Int]:Int*)
+${_root_.Macros.sum('arr)}
+</code></pre> 
+    <p>then it will splice <code>sum</code>:</p> 
+    <pre><code class="language-scala">val arr: Array[Int] = Array.apply(1, [2,3 : Int]:Int*)
+
+var sum = 0
+${ map(arr, x =&gt; '{sum += $x}) }
+sum
+</code></pre> 
+    <p>then it will inline <code>map</code>:</p> 
+    <pre><code class="language-scala">val arr: Array[Int] = Array.apply(1, [2,3 : Int]:Int*)
+
+var sum = 0
+val f = x =&gt; '{sum += $x}
+${ _root_.Macros.map(arr, 'f)('[Int])}
+sum
+</code></pre> 
+    <p>then it will expand and splice inside quotes <code>map</code>:</p> 
+    <pre><code class="language-scala">val arr: Array[Int] = Array.apply(1, [2,3 : Int]:Int*)
+
+var sum = 0
+val f = x =&gt; '{sum += $x}
+var i: Int = 0
+while (i &lt; (arr).length) {
+  val element: Int = (arr)(i)
+  sum += element
+  i += 1
+}
+sum
+</code></pre> 
+    <p>Finally cleanups and dead code elimination:</p> 
+    <pre><code class="language-scala">val arr: Array[Int] = Array.apply(1, [2,3 : Int]:Int*)
+var sum = 0
+var i: Int = 0
+while (i &lt; arr.length) {
+  val element: Int = arr(i)
+  sum += element
+  i += 1
+}
+sum
+</code></pre> 
+    <h3>Find implicits within a macro</h3> 
+    <p>Similarly to the <code>summonFrom</code> construct, it is possible to make implicit search available in a quote context. For this we simply provide <code>scala.quoted.Expr.summon</code>:</p> 
+    <pre><code class="language-scala">inline def setFor[T]: Set[T] = ${ setForExpr[T] }
+
+def setForExpr[T: Type](using QuoteContext): Expr[Set[T]] = {
+  Expr.summon[Ordering[T]] match {
+    case Some(ord) =&gt; '{ new TreeSet[T]()($ord) }
+    case _ =&gt; '{ new HashSet[T] }
+  }
+}
+</code></pre> 
+    <h3>Relationship with Whitebox Inline</h3> 
+    <p><a href="./inline.md">Inline</a> documents inlining. The code below introduces a whitebox inline method that can calculate either a value of type <code>Int</code> or a value of type <code>String</code>.</p> 
+    <pre><code class="language-scala">transparent inline def defaultOf(inline str: String) = ${ defaultOfImpl('str) }
+
+def defaultOfImpl(strExpr: Expr[String])(using QuoteContext): Expr[Any] =
+  strExpr.unliftOrError match
+    case "int" =&gt; '{1}
+    case "string" =&gt; '{"a"}
+
+// in a separate file
+val a: Int = defaultOf("int")
+val b: String = defaultOf("string")
+
+</code></pre> 
+    <h3>Defining a macro and using it in a single project</h3> 
+    <p>It is possible to define macros and use them in the same project as long as the implementation of the macros does not have run-time dependencies on code in the file where it is used. It might still have compile-time dependencies on types and quoted code that refers to the use-site file.</p> 
+    <p>To provide this functionality Dotty provides a transparent compilation mode where files that try to expand a macro but fail because the macro has not been compiled yet are suspended. If there are any suspended files when the compilation ends, the compiler will automatically restart compilation of the suspended files using the output of the previous (partial) compilation as macro classpath. In case all files are suspended due to cyclic dependencies the compilation will fail with an error.</p> 
+    <h3>Pattern matching on quoted expressions</h3> 
+    <p>It is possible to deconstruct or extract values out of <code>Expr</code> using pattern matching.</p> 
+    <p><code>scala.quoted</code> contains objects that can help extracting values from <code>Expr</code>.</p> 
+    <ul> 
+     <li><code>scala.quoted.Const</code>/<code>scala.quoted.Consts</code>: matches an expression of a literal value (or list of values) and returns the value (or list of values).</li> 
+     <li><code>scala.quoted.Unlifted</code>: matches an expression of a value (or list of values) and returns the value (or list of values).</li> 
+     <li><code>scala.quoted.Varargs</code>: matches an explicit sequence of expresions and returns them. These sequences are useful to get individual <code>Expr[T]</code> out of a varargs expression of type <code>Expr[Seq[T]]</code>.</li> 
+    </ul> 
+    <p>These could be used in the following way to optimize any call to <code>sum</code> that has statically known values.</p> 
+    <pre><code class="language-scala">inline def sum(inline args: Int*): Int = ${ sumExpr('args) }
+private def sumExpr(argsExpr: Expr[Seq[Int]])(using QuoteContext): Expr[Int] = argsExpr match {
+  case Varargs(Consts(args)) =&gt; // args is of type Seq[Int]
+    Expr(args.sum) // precompute result of sum
+  case Varargs(argExprs) =&gt; // argExprs is of type Seq[Expr[Int]]
+    val staticSum: Int = argExprs.map {
+      case Const(arg) =&gt; arg
+      case _ =&gt; 0
+    }.sum
+    val dynamicSum: Seq[Expr[Int]] = argExprs.filter {
+      case Const(_) =&gt; false
+      case arg =&gt; true
+    }
+    dynamicSum.foldLeft(Expr(staticSum))((acc, arg) =&gt; '{ $acc + $arg })
+  case _ =&gt;
+    '{ $argsExpr.sum }
+}
+</code></pre> 
+    <h4>Quoted patterns</h4> 
+    <p>Quoted pattens allow deconstructing complex code that contains a precise structure, types or methods. Patterns <code>'{ ... }</code> can be placed in any location where Scala expects a pattern.</p> 
+    <p>For example</p> 
+    <pre><code class="language-scala">optimize {
+  sum(sum(1, a, 2), 3, b)
+} // should be optimized to 6 + a + b
+</code></pre> 
+    <pre><code class="language-scala">def sum(args: Int*): Int = args.sum
+inline def optimize(inline arg: Int): Int = ${ optimizeExpr('arg) }
+private def optimizeExpr(body: Expr[Int])(using QuoteContext): Expr[Int] = body match {
+  // Match a call to sum without any arguments
+  case '{ sum() } =&gt; Expr(0)
+  // Match a call to sum with an argument $n of type Int. n will be the Expr[Int] representing the argument.
+  case '{ sum($n) } =&gt; n
+  // Match a call to sum and extracts all its args in an `Expr[Seq[Int]]`
+  case '{ sum(${Varargs(args)}: _*) } =&gt; sumExpr(args)
+  case body =&gt; body
+}
+private def sumExpr(args1: Seq[Expr[Int]])(using QuoteContext): Expr[Int] = {
+    def flatSumArgs(arg: Expr[Int]): Seq[Expr[Int]] = arg match {
+      case '{ sum(${Varargs(subArgs)}: _*) } =&gt; subArgs.flatMap(flatSumArgs)
+      case arg =&gt; Seq(arg)
+    }
+    val args2 = args1.flatMap(flatSumArgs)
+    val staticSum: Int = args2.map {
+      case Const(arg) =&gt; arg
+      case _ =&gt; 0
+    }.sum
+    val dynamicSum: Seq[Expr[Int]] = args2.filter {
+      case Const(_) =&gt; false
+      case arg =&gt; true
+    }
+    dynamicSum.foldLeft(Expr(staticSum))((acc, arg) =&gt; '{ $acc + $arg })
+}
+</code></pre> 
+    <h4>Recovering precise types using patterns</h4> 
+    <p>Sometimes it is necessary to get a more precise type for an expression. This can be achived using the following pattern match.</p> 
+    <pre><code class="language-scala">def f(exp: Expr[Any])(using QuoteContext) =
+  expr match
+    case '{ $x: t } =&gt;
+      // If the pattern match succeeds, then there is some type `t` such that
+      // - `x` is bound to a variable of type `Expr[t]`
+      // - `t` is bound to a new type `t` and a given instance `Type[t]` is provided for it
+      // That is, we have `x: Expr[t]` and `given Type[t]`, for some (unknown) type `t`.
+</code></pre> 
+    <p>This might be used to then perform an implicit search as in:</p> 
+    <pre><code class="language-scala">extension (inline sc: StringContext) inline def showMe(inline args: Any*): String = ${ showMeExpr('sc, 'args) }
+
+private def showMeExpr(sc: Expr[StringContext], argsExpr: Expr[Seq[Any]])(using QuoteContext): Expr[String] = {
+  argsExpr match {
+    case Varargs(argExprs) =&gt;
+      val argShowedExprs = argExprs.map {
+        case '{ $arg: t } =&gt;
+          Expr.summon[Show[t]] match {
+            case Some(showExpr) =&gt; '{ $showExpr.show($arg) }
+            case None =&gt; Reporting.error(s"could not find implicit for ${showTp.show}", arg); '{???}
+          }
+      }
+      val newArgsExpr = Varargs(argShowedExprs)
+      '{ $sc.s($newArgsExpr: _*) }
+    case _ =&gt;
+      // `new StringContext(...).showMeExpr(args: _*)` not an explicit `showMeExpr"..."`
+      Reporting.error(s"Args must be explicit", argsExpr)
+      '{???}
+  }
+}
+
+trait Show[-T] {
+  def show(x: T): String
+}
+</code></pre> 
+    <h4>Open code patterns</h4> 
+    <p>Quote pattern matching also provides higher-order patterns to match open terms. If a quoted term contains a definition, then the rest of the quote can refer to this definition.</p> 
+    <pre><code>'{
+  val x: Int = 4
+  x * x
+}
+</code></pre> 
+    <p>To match such a term we need to match the definition and the rest of the code, but we need to explicitly state that the rest of the code may refer to this definition.</p> 
+    <pre><code class="language-scala">case '{ val y: Int = $x; $body(y): Int } =&gt;
+</code></pre> 
+    <p>Here <code>$x</code> will match any closed expression while <code>$body(y)</code> will match an expression that is closed under <code>y</code>. Then the subexpression of type <code>Expr[Int]</code> is bound to <code>body</code> as an <code>Expr[Int =&gt; Int]</code>. The extra argument represents the references to <code>y</code>. Usually this expression is used in combination with <code>Expr.betaReduce</code> to replace the extra argument.</p> 
+    <pre><code class="language-scala">inline def eval(inline e: Int): Int = ${ evalExpr('e) }
+
+private def evalExpr(e: Expr[Int])(using QuoteContext): Expr[Int] = {
+  e match {
+    case '{ val y: Int = $x; $body(y): Int } =&gt;
+      // body: Expr[Int =&gt; Int] where the argument represents references to y
+      evalExpr(Expr.betaReduce(body)(evalExpr(x)))
+    case '{ ($x: Int) * ($y: Int) } =&gt;
+      (x, y) match
+        case (Const(a), Const(b)) =&gt; Expr(a * b)
+        case _ =&gt; e
+    case _ =&gt; e
+  }
+}
+</code></pre> 
+    <pre><code class="language-scala">eval { // expands to the code: (16: Int)
+  val x: Int = 4
+  x * x
+}
+</code></pre> 
+    <p>We can also close over several bindings using <code>$b(a1, a2, ..., an)</code>. To match an actual application we can use braces on the function part <code>${b}(a1, a2, ..., an)</code>.</p> 
+    <h3>More details</h3> 
+    <p><a href="./macros-spec.md">More details</a></p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

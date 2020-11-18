@@ -1,0 +1,77 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Programmatic Structural Types - More Details</title><script type="text/javascript" src="../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../styles/nord-light.css"></link><link rel="stylesheet" href="../styles/scalastyle.css"></link><link rel="stylesheet" href="../styles/dotty-icons.css"></link><link rel="stylesheet" href="../styles/diagram.css"></link><link rel="stylesheet" href="../styles/filter-bar.css"></link><link rel="stylesheet" href="../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../styles/filter-bar.css"></link><script type="text/javascript" src="../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../scripts/data.js" defer="true"></script><script type="text/javascript" src="../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../css/bootstrap.min.css"></link><link rel="stylesheet" href="../css/dottydoc.css"></link><link rel="stylesheet" href="../css/color-brewer.css"></link><script type="text/javascript" src="../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/changed-features/structural-types-spec.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="index.html"></a>/<a href="structural-types-spec.html">Programmatic Structural Types - More Details</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Programmatic Structural Types - More Details"</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <h2>Syntax</h2> 
+    <pre><code>SimpleType    ::= ... | Refinement
+Refinement    ::= ‘{’ RefineStatSeq ‘}’
+RefineStatSeq ::=  RefineStat {semi RefineStat}
+RefineStat    ::= ‘val’ VarDcl | ‘def’ DefDcl | ‘type’ {nl} TypeDcl
+</code></pre> 
+    <h2>Implementation of structural types</h2> 
+    <p>The standard library defines a universal marker trait <code>Selectable</code> in the package <code>scala</code>:</p> 
+    <pre><code class="language-scala">trait Selectable extends Any
+</code></pre> 
+    <p>An implementation of <code>Selectable</code> that relies on Java reflection is available in the standard library: <code>scala.reflect.Selectable</code>. Other implementations can be envisioned for platforms where Java reflection is not available.</p> 
+    <p>Implementations of <code>Selectable</code> have to make available one or both of the methods <code>selectDynamic</code> and <code>applyDynamic</code>. The methods could be members of the <code>Selectable</code> implementation or they could be extension methods.</p> 
+    <p>The <code>selectDynamic</code> method takes a field name and returns the value associated with that name in the <code>Selectable</code>. It should have a signature of the form:</p> 
+    <pre><code class="language-scala">def selectDynamic(name: String): T
+</code></pre> 
+    <p>Often, the return type <code>T</code> is <code>Any</code>.</p> 
+    <p>The <code>applyDynamic</code> method is used for selections that are applied to arguments. It takes a method name and possibly <code>ClassTag</code>s representing its parameters types as well as the arguments to pass to the function. Its signature should be of one of the two following forms:</p> 
+    <pre><code class="language-scala">def applyDynamic(name: String)(args: Any*): T
+def applyDynamic(name: String, ctags: ClassTag[?]*)(args: Any*): T
+</code></pre> 
+    <p>Both versions are passed the actual arguments in the <code>args</code> parameter. The second version takes in addition a vararg argument of class tags that identify the method's parameter classes. Such an argument is needed if <code>applyDynamic</code> is implemented using Java reflection, but it could be useful in other cases as well. <code>selectDynamic</code> and <code>applyDynamic</code> can also take additional context parameters in using clauses. These are resolved in the normal way at the callsite.</p> 
+    <p>Given a value <code>v</code> of type <code>C { Rs }</code>, where <code>C</code> is a class reference and <code>Rs</code> are structural refinement declarations, and given <code>v.a</code> of type <code>U</code>, we consider three distinct cases:</p> 
+    <ul> 
+     <li> <p>If <code>U</code> is a value type, we map <code>v.a</code> to:</p> <pre><code class="language-scala">v.selectDynamic("a").asInstanceOf[U]
+</code></pre> </li> 
+     <li> <p>If <code>U</code> is a method type <code>(T11, ..., T1n)...(TN1, ..., TNn): R</code> and it is not a dependent method type, we map <code>v.a(a11, ..., a1n)...(aN1, ..., aNn)</code> to:</p> <pre><code class="language-scala">v.applyDynamic("a")(a11, ..., a1n, ..., aN1, ..., aNn)
+  .asInstanceOf[R]
+</code></pre> <p>If this call resolves to an <code>applyDynamic</code> method of the second form that takes a <code>ClassTag[?]*</code> argument, we further rewrite this call to</p> <pre><code class="language-scala">v.applyDynamic("a", CT11, ..., CT1n, ..., CTN1, ... CTNn)(
+  a11, ..., a1n, ..., aN1, ..., aNn)
+  .asInstanceOf[R]
+</code></pre> <p>where each <code>CT_ij</code> is the class tag of the type of the formal parameter <code>Tij</code></p> </li> 
+     <li> <p>If <code>U</code> is neither a value nor a method type, or a dependent method type, an error is emitted.</p> </li> 
+    </ul> 
+    <p>Note that <code>v</code>'s static type does not necessarily have to conform to <code>Selectable</code>, nor does it need to have <code>selectDynamic</code> and <code>applyDynamic</code> as members. It suffices that there is an implicit conversion that can turn <code>v</code> into a <code>Selectable</code>, and the selection methods could also be available as extension methods.</p> 
+    <h2>Limitations of structural types</h2> 
+    <ul> 
+     <li>Dependent methods cannot be called via structural call.</li> 
+     <li>Overloaded methods cannot be called via structural call.</li> 
+     <li>Refinements do not handle polymorphic methods.</li> 
+    </ul> 
+    <h2>Differences with Scala 2 structural types</h2> 
+    <ul> 
+     <li>Scala 2 supports structural types by means of Java reflection. Unlike Scala 3, structural calls do not rely on a mechanism such as <code>Selectable</code>, and reflection cannot be avoided.</li> 
+     <li>In Scala 2, structural calls to overloaded methods are possible.</li> 
+     <li>In Scala 2, mutable <code>var</code>s are allowed in refinements. In Scala 3, they are no longer allowed.</li> 
+    </ul> 
+    <h2>Context</h2> 
+    <p>For more info, see <a href="https://github.com/lampepfl/dotty/issues/1886">Rethink Structural Types</a>.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../scripts/pages.js"></script><script type="text/javascript" src="../scripts/main.js"></script></body></html>

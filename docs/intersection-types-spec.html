@@ -1,0 +1,96 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Intersection Types - More Details</title><script type="text/javascript" src="../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../styles/nord-light.css"></link><link rel="stylesheet" href="../styles/scalastyle.css"></link><link rel="stylesheet" href="../styles/dotty-icons.css"></link><link rel="stylesheet" href="../styles/diagram.css"></link><link rel="stylesheet" href="../styles/filter-bar.css"></link><link rel="stylesheet" href="../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../styles/filter-bar.css"></link><script type="text/javascript" src="../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../scripts/data.js" defer="true"></script><script type="text/javascript" src="../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../css/bootstrap.min.css"></link><link rel="stylesheet" href="../css/dottydoc.css"></link><link rel="stylesheet" href="../css/color-brewer.css"></link><script type="text/javascript" src="../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/new-types/intersection-types-spec.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="index.html"></a>/<a href="intersection-types-spec.html">Intersection Types - More Details</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Intersection Types - More Details"</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <h2>Syntax</h2> 
+    <p>Syntactically, the type <code>S &amp; T</code> is an infix type, where the infix operator is <code>&amp;</code>. The operator <code>&amp;</code> is a normal identifier with the usual precedence and subject to usual resolving rules. Unless shadowed by another definition, it resolves to the type <code>scala.&amp;</code>, which acts as a type alias to an internal representation of intersection types.</p> 
+    <pre><code>Type              ::=  ...| InfixType
+InfixType         ::=  RefinedType {id [nl] RefinedType}
+</code></pre> 
+    <h2>Subtyping Rules</h2> 
+    <pre><code>T &lt;: A    T &lt;: B
+----------------
+  T &lt;: A &amp; B
+
+    A &lt;: T
+----------------
+    A &amp; B &lt;: T
+
+    B &lt;: T
+----------------
+    A &amp; B &lt;: T
+</code></pre> 
+    <p>From the rules above, we can show that <code>&amp;</code> is <em>commutative</em>: <code>A &amp; B &lt;: B &amp; A</code> for any type <code>A</code> and <code>B</code>.</p> 
+    <pre><code>   B &lt;: B           A &lt;: A
+----------       -----------
+A &amp; B &lt;: B       A &amp; B &lt;: A
+---------------------------
+       A &amp; B  &lt;:  B &amp; A
+</code></pre> 
+    <p>In another word, <code>A &amp; B</code> is the same type as <code>B &amp; A</code>, in the sense that the two types have the same values and are subtypes of each other.</p> 
+    <p>If <code>C</code> is a type constructor, then <code>C[A] &amp; C[B]</code> can be simplified using the following three rules:</p> 
+    <ul> 
+     <li>If <code>C</code> is covariant, <code>C[A] &amp; C[B] ~&gt; C[A &amp; B]</code></li> 
+     <li>If <code>C</code> is contravariant, <code>C[A] &amp; C[B] ~&gt; C[A | B]</code></li> 
+     <li>If <code>C</code> is non-variant, emit a compile error</li> 
+    </ul> 
+    <p>When <code>C</code> is covariant, <code>C[A &amp; B] &lt;: C[A] &amp; C[B]</code> can be derived:</p> 
+    <pre><code>    A &lt;: A                  B &lt;: B
+  ----------               ---------
+  A &amp; B &lt;: A               A &amp; B &lt;: B
+---------------         -----------------
+C[A &amp; B] &lt;: C[A]          C[A &amp; B] &lt;: C[B]
+------------------------------------------
+      C[A &amp; B] &lt;: C[A] &amp; C[B]
+</code></pre> 
+    <p>When <code>C</code> is contravariant, <code>C[A | B] &lt;: C[A] &amp; C[B]</code> can be derived:</p> 
+    <pre><code>    A &lt;: A                        B &lt;: B
+  ----------                     ---------
+  A &lt;: A | B                     B &lt;: A | B
+-------------------           ----------------
+C[A | B] &lt;: C[A]              C[A | B] &lt;: C[B]
+--------------------------------------------------
+            C[A | B] &lt;: C[A] &amp; C[B]
+</code></pre> 
+    <h2>Erasure</h2> 
+    <p>The erased type for <code>S &amp; T</code> is the erased <em>glb</em> (greatest lower bound) of the erased type of <code>S</code> and <code>T</code>. The rules for erasure of intersection types are given below in pseudocode:</p> 
+    <pre><code>|S &amp; T| = glb(|S|, |T|)
+
+glb(JArray(A), JArray(B)) =    JArray(glb(A, B))
+glb(JArray(T), _)         =    JArray(T)
+glb(_, JArray(T))         =    JArray(T)
+glb(A, B)                 =    A                     if A extends B
+glb(A, B)                 =    B                     if B extends A
+glb(A, _)                 =    A                     if A is not a trait
+glb(_, B)                 =    B                     if B is not a trait
+glb(A, _)                 =    A                     // use first
+</code></pre> 
+    <p>In the above, <code>|T|</code> means the erased type of <code>T</code>, <code>JArray</code> refers to the type of Java Array.</p> 
+    <p>See also: <code>TypeErasure#erasedGlb</code></p> 
+    <h2>Relationship with Compound Type (<code>with</code>)</h2> 
+    <p>Intersection types <code>A &amp; B</code> replace compound types <code>A with B</code> in Scala 2. For the moment, the syntax <code>A with B</code> is still allowed and interpreted as <code>A &amp; B</code>, but its usage as a type (as opposed to in a <code>new</code> or <code>extends</code> clause) will be deprecated and removed in the future.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../scripts/pages.js"></script><script type="text/javascript" src="../scripts/main.js"></script></body></html>

@@ -1,0 +1,167 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Dottydoc</title><script type="text/javascript" src="../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../styles/nord-light.css"></link><link rel="stylesheet" href="../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/diagram.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../styles/filter-bar.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../css/dottydoc.css"></link><link rel="stylesheet" href="../../css/color-brewer.css"></link><script type="text/javascript" src="../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/usage/dottydoc.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../index.html"></a>/<a href="index.html">Usage</a>/<a href="../-usage/dottydoc.html">Dottydoc</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>Dottydoc</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>Dottydoc is a tool to generate a combined documentation and API reference for your project.</p> 
+    <p>In previous versions of the Scaladoc tool, there is a big divide between what is documentation and what is API reference. Dottydoc allows referencing, citing and rendering parts of your API in your documentation, thus allowing the two to blend naturally.</p> 
+    <p>To do this, Dottydoc is very similar to what <a href="http://jekyllrb.com/">Jekyll</a> provides in form of static site generation. As you probably guessed, this whole site was created using Dottydoc.</p> 
+    <p>Creating a site is just as simple as in Jekyll. The site root contains the layout of the site and all files placed here will be either considered static, or processed for template expansion.</p> 
+    <p>The files that are considered for template expansion must end in <code>*.{html,md}</code> and will from here on be referred to as "template files" or "templates".</p> 
+    <p>A simple "hello world" site could look something like this:</p> 
+    <pre><code>├── docs
+│   └── getting-started.md
+└── index.html
+</code></pre> 
+    <p>This will give you a site with the following endpoints:</p> 
+    <pre><code>_site/index.html
+_site/docs/getting-started.html
+</code></pre> 
+    <p>Just as with Jekyll, the site is rendered in a <code>_site</code> directory.</p> 
+    <h1>Using existing Templates and Layouts</h1> 
+    <p>Dottydoc uses the <a href="https://shopify.github.io/liquid/">Liquid</a> templating engine and provides a number of custom filters and tags specific to Scala documentation.</p> 
+    <p>In Dottydoc, all templates can contain YAML front-matter. The front-matter is parsed and put into the <code>page</code> variable available in templates via Liquid.</p> 
+    <p>To perform template expansion, Dottydoc looks at <code>layout</code> in the front-matter. Here's a simple example of the templating system in action, <code>index.html</code>:</p> 
+    <pre><code class="language-html">---
+layout: main
+---
+
+&lt;h1&gt;Hello world!&lt;/h1&gt;
+</code></pre> 
+    <p>With a simple main template like this:</p> 
+    <pre><code class="language-html">&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Hello, world!&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        {{ content }}
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre> 
+    <p>Would result in <code>{{ content }}</code> being replaced by <code>&lt;h1&gt;Hello world!&lt;/h1&gt;</code> from the <code>index.html</code> file.</p> 
+    <p>Layouts must be placed in a <code>_layouts</code> directory in the site root:</p> 
+    <pre><code>├── _layouts
+│   └── main.html
+├── docs
+│   └── getting-started.md
+└── index.html
+</code></pre> 
+    <p>It is also possible to use one of the <a href="#default-layouts">default layouts</a> that ship with Dottydoc.</p> 
+    <h1>Blog</h1> 
+    <p>Dottydoc also allows for a simple blogging platform in the same vein as Jekyll. Blog posts are placed within the <code>./blog/_posts</code> directory and have to be in the form <code>year-month-day-title.{md,html}</code>.</p> 
+    <p>An example of this would be:</p> 
+    <pre><code>├── blog
+│   └── _posts
+│       └── 2016-12-05-implicit-function-types.md
+└── index.html
+</code></pre> 
+    <p>To be rendered as templates, each blog post should have front-matter and a <code>layout</code> declaration.</p> 
+    <p>The posts are also available in the variable <code>site.posts</code> throughout the site. The fields of these objects are the same as in <code>[BlogPost](dotty.tools.dottydoc.staticsite.BlogPost)</code>.</p> 
+    <h1>Includes</h1> 
+    <p>In Liquid, there is a concept of include tags, these are used in templates to include other de facto templates:</p> 
+    <pre><code class="language-html">&lt;div class="container"&gt;
+    {% include "sidebar.html" %}
+&lt;/div&gt;
+</code></pre> 
+    <p>You can leave out the file extension if your include ends in <code>.html</code>.</p> 
+    <p>Includes need to be kept in <code>_includes</code> in the site root. Dottydoc provides a couple of <a href="#default-includes">default includes</a>, but the user-specified includes may override these.</p> 
+    <p>An example structure with an include file "sidebar.html":</p> 
+    <pre><code>├── _includes
+│   └── sidebar.html
+├── blog
+│   ├── _posts
+│   │   └── 2016-12-05-implicit-function-types.md
+│   └── index.md
+└── index.html
+</code></pre> 
+    <h1>Sidebar</h1> 
+    <p>Dottydoc gives you the ability to create your own custom table of contents, this can either be achieved by overriding the <code>toc.html</code> or by providing a <code>sidebar.yml</code> file in the site root:</p> 
+    <pre><code class="language-yaml">sidebar:
+    - title: Blog
+      url: blog/index.html
+    - title: Docs
+      url: docs/index.html
+    - title: Usage
+      subsection:
+        - title: Dottydoc
+          url: docs/usage/dottydoc.html
+        - title: sbt-projects
+          url: docs/usage/sbt-projects.html
+</code></pre> 
+    <p>The <code>sidebar</code> key is mandatory, as well as <code>title</code> for each element. The default table of contents allows you to have subsections - albeit the current depth limit is 2 -- we would love to see this changed, contributions welcome!</p> 
+    <p>The items which have the <code>subsection</code> key, may not have a <code>url</code> key in the current scheme. A site root example with this could be:</p> 
+    <pre><code>├── blog
+│   └── _posts
+│       └── 2016-12-05-implicit-function-types.md
+├── index.html
+└── sidebar.yml
+</code></pre> 
+    <h1>Dottydoc Specific Tags and Behavior</h1> 
+    <h2>Linking to API</h2> 
+    <p>If you for instance, want to link to <code>scala.collection.immutable.Seq</code> in a markdown file, you can simply use the canonical path in your url:</p> 
+    <pre><code class="language-markdown">[Seq](scala.collection.immutable.Seq)
+</code></pre> 
+    <p>Linking to members is done in the same fashion:</p> 
+    <pre><code class="language-markdown">[Seq](scala.collection.immutable.Seq.isEmpty)
+</code></pre> 
+    <p>Dottydoc denotes objects by ending their names in "$". To select <code>List.range</code> you'd therefore write:</p> 
+    <pre><code class="language-markdown">[List.range](scala.collection.immutable.List$.range)
+</code></pre> 
+    <h2>Rendering Docstrings</h2> 
+    <p>Sometimes you end up duplicating the docstring text in your documentation, therefore Dottydoc makes it easy to render this inline:</p> 
+    <pre><code class="language-html">{% docstring "scala.collection.immutable.Seq" %}
+</code></pre> 
+    <h2>Other extensions</h2> 
+    <p>We would love to have your feedback on what you think would be good in order to render the documentation you want! Perhaps you would like to render method definitions or members? Let us know by filing <a href="https://github.com/lampepfl/dotty/issues/new">issues</a>!</p> 
+    <h1>Default Layouts</h1> 
+    <h2>main.html</h2> 
+    <p>A wrapper for all other layouts, includes a default <code>&lt;head&gt;</code> with included JavaScripts and CSS style-sheets.</p> 
+    <h3>Variables</h3> 
+    <ul> 
+     <li><code>content</code>: placed in <code>&lt;body&gt;</code> tag</li> 
+     <li><code>extraCSS</code>: a list of relative paths to extra CSS style-sheets for the site</li> 
+     <li><code>extraJS</code>: a list of relative paths to extra JavaScripts for the site</li> 
+     <li><code>title</code>: the <code>&lt;title&gt;</code> of the page</li> 
+    </ul> 
+    <h2>sidebar.html</h2> 
+    <p>Sidebar uses <code>main.html</code> as its parent layout. It adds a sidebar generated from a YAML file (if exists), as well as the index for the project API.</p> 
+    <h3>Variables</h3> 
+    <ul> 
+     <li><code>content</code>: placed in a <code>&lt;div&gt;</code> with class <code>content-body</code></li> 
+     <li><code>docs</code>: the API docs generated from supplied source files, this is included by default and does not need to be specified.</li> 
+    </ul> 
+    <h2>doc-page.html</h2> 
+    <p>Doc page is used for pages that need a sidebar and provides a small wrapper for the included <code>{{ content}}</code>.</p> 
+    <h2>api-page.html</h2> 
+    <p>The last two layouts are special, in that they are treated specially by Dottydoc. The input to the API page is a documented <code>[Entity](dotty.tools.dottydoc.model.Entity)</code>. As such, this page can be changed to alter the way Dottydoc renders API documentation.</p> 
+    <h2>blog-page.html</h2> 
+    <p>A blog page uses files placed in <code>./blog/_posts/</code> as input to render a blog.</p> 
+    <h1>Default Includes</h1> 
+    <ul> 
+     <li><code>scala-logo.svg</code>: the scala in Dotty version as svg</li> 
+     <li><code>toc.html</code>: the default table of contents template</li> 
+    </ul> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../scripts/pages.js"></script><script type="text/javascript" src="../../scripts/main.js"></script></body></html>

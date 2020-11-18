@@ -1,0 +1,296 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Debugging Techniques</title><script type="text/javascript" src="../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../styles/nord-light.css"></link><link rel="stylesheet" href="../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/diagram.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../styles/filter-bar.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../css/dottydoc.css"></link><link rel="stylesheet" href="../../css/color-brewer.css"></link><script type="text/javascript" src="../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/contributing/debugging.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../index.html"></a>/<a href="index.html">Contributing</a>/<a href="../-contributing/debugging.html">Debugging Techniques</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>Debugging Techniques</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <h1>Debugging Techniques</h1> 
+    <ul> 
+     <li><a href="#setting-up-the-playground">Setting up the playground</a></li> 
+     <li><a href="#show-for-human-readable-output">Show for human readable output</a></li> 
+     <li><a href="#how-to-disable-color">How to disable color</a></li> 
+     <li><a href="#reporting-as-a-non-intrusive-println">Reporting as a non-intrusive println</a></li> 
+     <li><a href="#printing-out-trees-after-phases">Printing out trees after phases</a></li> 
+     <li><a href="#printing-out-stack-traces-of-compile-time-errors">Printing out stack traces of compile time errors</a></li> 
+     <li><a href="#configuring-the-printer-output">Configuring the printer output</a></li> 
+     <li><a href="#figuring-out-an-object-creation-site">Figuring out an object creation site</a> 
+      <ul> 
+       <li><a href="#via-id">Via ID</a></li> 
+       <li><a href="#via-tracer">Via tracer</a></li> 
+      </ul> </li> 
+     <li><a href="#built-in-logging-architecture">Built-in Logging Architecture</a> 
+      <ul> 
+       <li><a href="#printers">Printers</a></li> 
+       <li><a href="#tracing">Tracing</a></li> 
+       <li><a href="#reporter">Reporter</a></li> 
+      </ul> </li> 
+    </ul> 
+    <p><small><i><a href="http://ecotrust-canada.github.io/markdown-toc/">Table of contents generated with markdown-toc</a></i></small></p> 
+    <h2>Setting up the playground</h2> 
+    <p>Consider the <code>../issues/Playground.scala</code> (relative to the Dotty directory) file is:</p> 
+    <pre><code class="language-scala">object Playground {
+  def main(args: Array[String]) = {
+    println("Hello World")
+  }
+}
+</code></pre> 
+    <p>Then, you can debug Dotty by compiling this file via <code>scalac ../issues/Playground.scala</code> (from the SBT console) and collecting various debug output in process. This section documents techniques you can use to collect the debug info.</p> 
+    <p><a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/typer/Typer.scala#L2231">This</a> is the entry point to the Typer. The job of the Typer is to take an untyped tree, compute its type and turn it into a typed tree by attaching the type information to that tree. We will use this entry point to practice debugging techniques. E.g.:</p> 
+    <pre><code class="language-scala">  def typed(tree: untpd.Tree, pt: Type, locked: TypeVars)(implicit ctx: Context): Tree =
+    trace(i"typing $tree", typr, show = true) {
+      println("Hello Debug!")
+      /*...*/
+</code></pre> 
+    <p>Then:</p> 
+    <pre><code class="language-shell">scalac ../issues/Playground.scala
+</code></pre> 
+    <p>The techniques discussed below can be tried out in place of <code>println("Hello Debug")</code> in that location. They are of course applicable throughout the codebase.</p> 
+    <h2>Show for human readable output</h2> 
+    <p>Many objects in the compiler have a <code>show</code> method available on them via implicit rich wrapper:</p> 
+    <pre><code class="language-scala">println(tree.show)
+</code></pre> 
+    <p>This will output every single tree passing through the typer (or wherever else you inject it) in a human readable form. Try calling <code>show</code> on anything you want to be human-readable, and chances are it will be possible to do so.</p> 
+    <h2>How to disable color</h2> 
+    <p>Note that the <code>show</code> command above outputs the code in color. This is achieved by injecting special characters into the strings which terminals interpret as commands to change color of the output. This however may not be what you want, e.g. if you want to zero-in on a particular tree:</p> 
+    <pre><code class="language-scala">if (tree.show == """println("Hello World")""")
+  println(s"${tree.show}\n${pt.show}\n${tree.uniqueId}\n===\n")
+</code></pre> 
+    <p>The intention above is to output an extended debug info on a tree that matches a particular human-readable representation. However, because of the color characters, the comparison will fail.</p> 
+    <p>To disable color output from <code>show</code>, run <code>scalac</code> as follows:</p> 
+    <p><code>scalac -color:never ../issues/Playground.scala</code></p> 
+    <h2>Reporting as a non-intrusive println</h2> 
+    <p>Consider you want to debug the <code>tree</code> that goes into <code>assertPositioned(tree)</code> in the <code>typed</code> method. You can do:</p> 
+    <pre><code class="language-scala">println(tree.show)
+assertPositioned(tree)
+</code></pre> 
+    <p>But you can also do:</p> 
+    <pre><code class="language-scala">assertPositioned(tree.reporting(s"Tree is: $result"))
+</code></pre> 
+    <p><code>extension (a: A) def reporting(f: WrappedResult[T] ?=&gt; String, p: Printer = Printers.default): A</code> is defined on all types. The function <code>f</code> can be written without the argument since it is a context function<code>. The</code>result<code>variable is a part of the</code>WrapperResult<code>– a tiny framework powering the</code>reporting<code>function. Basically, whenever you are using</code>reporting<code>on an object</code>A<code>, you can use the</code>result: A<code>variable from this function and it will be equal to the object you are calling</code>reporting` on.</p> 
+    <h2>Printing out trees after phases</h2> 
+    <p>To print out the trees you are compiling after the FrontEnd (scanner, parser, namer, typer) phases:</p> 
+    <pre><code class="language-shell">scalac -Xprint:typer ../issues/Playground.scala
+</code></pre> 
+    <p>To print out the trees after Frontend and CollectSuperCalls phases:</p> 
+    <pre><code class="language-shell">scalac -Xprint:typer,collectSuperCalls ../issues/Playground.scala
+</code></pre> 
+    <p>To print out the trees after all phases:</p> 
+    <pre><code class="language-shell">scalac -Xprint:all ../issues/Playground.scala
+</code></pre> 
+    <p>To find out the list of all the phases and their names, check out <a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/Compiler.scala#L34">this</a> line in <code>Compiler.scala</code>. Each <code>Phase</code> object has <code>phaseName</code> defined on it, this is the phase name.</p> 
+    <h2>Printing out stack traces of compile time errors</h2> 
+    <p>You can use the flag <code>-Ydebug-error</code> to get the stack trace of all the compile-time errors. Consider the following file:</p> 
+    <pre><code class="language-scala">object Foo
+object Foo
+</code></pre> 
+    <p>Clearly we cannot define an object <code>Foo</code> twice. Now compile it as follows: <code>scalac -Ydebug-error ../issues/Playground.scala</code> (use whatever path you saved it under). The result will be as follows:</p> 
+    <pre><code class="language-scala">-- Error: ../issues/Playground.scala:2:0 ---------------------------------------
+2 |object Foo
+  |^
+  |object Foo has already been compiled once during this run
+java.lang.Thread.getStackTrace(Thread.java:1552)
+dotty.tools.dotc.reporting.Reporting.error(Reporter.scala:139)
+dotty.tools.dotc.core.Contexts$Context.error(Contexts.scala:71)
+dotty.tools.dotc.typer.Namer.errorName$2(Namer.scala:300)
+dotty.tools.dotc.typer.Namer.checkNoConflict$1(Namer.scala:306)
+dotty.tools.dotc.typer.Namer.createSymbol(Namer.scala:353)
+dotty.tools.dotc.typer.Namer.recur$1(Namer.scala:490)
+dotty.tools.dotc.typer.Namer.recur$3$$anonfun$2(Namer.scala:495)
+...
+</code></pre> 
+    <p>So, the error happened in the Namer's <code>checkNoConflict</code> method (after which all the stack frames represent the mechanics of issuing an error, not an intent that produced the error in the first place).</p> 
+    <h2>Configuring the printer output</h2> 
+    <p>Printing from the <code>show</code> and <code>-Xprint</code> is done from the Printers framework (discussed in more details below). The following settings influence the output of the printers:</p> 
+    <pre><code class="language-scala">val printLines        = BooleanSetting("-print-lines"        , "Show source code line numbers.") withAbbreviation "--print-lines"
+val uniqid            = BooleanSetting("-uniqid"             , "Uniquely tag all identifiers in debugging output.") withAbbreviation "--unique-id"
+val XprintInline      = BooleanSetting("-Xprint-inline"      , "Show  where inlined code comes from")
+val XprintTypes       = BooleanSetting("-Xprint-types"       , "Print tree types (debugging option).")
+val Ydebug            = BooleanSetting("-Ydebug"             , "Increase the quantity of debugging output.")
+val YdebugFlags       = BooleanSetting("-Ydebug-flags"       , "Print all flags of definitions")
+val YdebugMissingRefs = BooleanSetting("-Ydebug-missing-refs", "Print a stacktrace when a required symbol is missing")
+val YdebugNames       = BooleanSetting("-Ydebug-names"       , "Show internal representation of names")
+val YdebugPos         = BooleanSetting("-Ydebug-pos"         , "Show full source positions including spans")
+val YdebugTrace       = BooleanSetting("-Ydebug-trace"       , "Trace core operations")
+val YdebugTreeWithId  = IntSetting    ("-Ydebug-tree-with-id", "Print the stack trace when the tree with the given id is created", Int.MinValue)
+val YprintDebug       = BooleanSetting("-Yprint-debug"       , "when printing trees, print some extra information useful for debugging.")
+val YprintDebugOwners = BooleanSetting("-Yprint-debug-owners", "when printing trees, print owners of definitions.")
+val YprintPos         = BooleanSetting("-Yprint-pos"         , "show tree positions.")
+val YprintPosSyms     = BooleanSetting("-Yprint-pos-syms"    , "show symbol definitions positions.")
+val YprintSyms        = BooleanSetting("-Yprint-syms"        , "when printing trees print info in symbols instead of corresponding info in trees.")
+val YshowTreeIds      = BooleanSetting("-Yshow-tree-ids"     , "Uniquely tag all tree nodes in debugging output.")
+val YshowVarBounds    = BooleanSetting("-Yshow-var-bounds"   , "Print type variables with their bounds")
+val YtestPickler      = BooleanSetting("-Ytest-pickler"      , "self-test for pickling functionality; should be used with -Ystop-after:pickler")
+</code></pre> 
+    <p>They are defined in <a href="https://github.com/lampepfl/dotty/blob/master/compiler/src/dotty/tools/dotc/config/ScalaSettings.scala">ScalaSettings.scala</a>. E.g. <code>YprintPos</code> is defined as:</p> 
+    <pre><code class="language-scala">val YprintPos: Setting[Boolean] = BooleanSetting("-Yprint-pos", "show tree positions.")
+</code></pre> 
+    <p>And is to be used as:</p> 
+    <pre><code class="language-scala">scalac -Yprint-pos  ../issues/Playground.scala
+</code></pre> 
+    <p>If used, all the trees output with <code>show</code> or via <code>-Xprint:typer</code> will also have positions attached to them, e.g.:</p> 
+    <pre><code class="language-scala">package &lt;empty&gt;@&lt;Playground.scala:1&gt; {
+  module object Playground {
+    def main(
+      args:
+        Array@&lt;Playground.scala:2&gt;[String@&lt;Playground.scala:2&gt;]@&lt;
+          Playground.scala:2
+        &gt;
+      @&lt;Playground.scala:2&gt;
+    ) =
+      {
+        println@&lt;Playground.scala:3&gt;("Hello World"@&lt;Playground.scala:3&gt;)@&lt;
+          Playground.scala:3
+        &gt;
+      }@&lt;Playground.scala:2&gt;
+    @&lt;Playground.scala:2&gt;
+  }@&lt;Playground.scala:1&gt;
+}@&lt;Playground.scala:1&gt;
+&lt;empty&gt;@&lt;Playground.scala:1&gt;
+</code></pre> 
+    <h2>Figuring out an object creation site</h2> 
+    <h3>Via ID</h3> 
+    <p>Every <a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/ast/Positioned.scala">Positioned</a> (a parent class of <code>Tree</code>) object has a <code>uniqueId</code> field. It is an integer that is unique for that tree and doesn't change from compile run to compile run. You can output these IDs from any printer (such as the ones used by <code>.show</code> and <code>-Xprint</code>) via <code>-Yshow-tree-ids</code> flag, e.g.:</p> 
+    <pre><code class="language-shell">scalac -Xprint:typer -Yshow-tree-ids  ../issues/Playground.scala
+</code></pre> 
+    <p>Gives:</p> 
+    <pre><code class="language-scala">package &lt;empty&gt;#1047 {
+  final lazy module val Playground: Playground$#1049 =
+    new Playground$#1049#1050#1051()#1052
+  #1053
+  final module class Playground$() extends Object#1090#1091#1092()#1093, _root_#
+    1061
+  .scala#1062.Serializable#1063 { this: Playground#1054.type#1055 =&gt;
+    def main(args: Array#1028[String#1033]#1034#1038): Unit#1039 =
+      {
+        println#1094("Hello World"#1041)#1095
+      }#1096
+    #1097
+  }#1099
+}#1100
+</code></pre> 
+    <p>You can then use these IDs to locate the creation site of a given tree using that ID via <code>-Ydebug-tree-with-id</code>, e.g.:</p> 
+    <pre><code class="language-shell">scalac -Ydebug-tree-with-id 1049 ../issues/Playground.scala
+</code></pre> 
+    <p>When the tree with the correspond id is allocated, the following prompt will appear:</p> 
+    <pre><code>Debug tree (id=1049) creation
+Ident(Playground$)
+
+
+a)bort, s)tack, r)esume
+</code></pre> 
+    <p>If you input <code>s</code>, you will get a stack trace like this:</p> 
+    <pre><code>java.lang.Throwable
+  at dotty.tools.dotc.reporting.Reporter$.loop$1(Reporter.scala:55)
+  at dotty.tools.dotc.reporting.Reporter$.displayPrompt(Reporter.scala:63)
+  at dotty.tools.dotc.ast.Positioned.printTrace$1(Positioned.scala:32)
+  at dotty.tools.dotc.ast.Positioned.uniqueId_$eq(Positioned.scala:34)
+  at dotty.tools.dotc.ast.Positioned.&lt;init&gt;(Positioned.scala:45)
+  at dotty.tools.dotc.ast.Trees$Tree.&lt;init&gt;(Trees.scala:53)
+  at dotty.tools.dotc.ast.Trees$DenotingTree.&lt;init&gt;(Trees.scala:266)
+  at dotty.tools.dotc.ast.Trees$NameTree.&lt;init&gt;(Trees.scala:292)
+  at dotty.tools.dotc.ast.Trees$RefTree.&lt;init&gt;(Trees.scala:298)
+  at dotty.tools.dotc.ast.Trees$Ident.&lt;init&gt;(Trees.scala:375)
+  at dotty.tools.dotc.ast.untpd$.Ident(untpd.scala:301)
+  at dotty.tools.dotc.ast.desugar$.moduleDef(Desugar.scala:804)
+  at dotty.tools.dotc.ast.desugar$.defTree(Desugar.scala:1038)
+  at dotty.tools.dotc.typer.Namer.expand(Namer.scala:441)
+  at dotty.tools.dotc.typer.Namer.index$$anonfun$1(Namer.scala:722)
+  at dotty.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+  at dotty.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+  at scala.collection.immutable.List.foreach(List.scala:392)
+  at dotty.tools.dotc.typer.Namer.index(Namer.scala:722)
+  at dotty.tools.dotc.typer.Namer.recur$1(Namer.scala:484)
+  at dotty.tools.dotc.typer.Namer.indexExpanded(Namer.scala:501)
+  at dotty.tools.dotc.typer.Namer.index(Namer.scala:474)
+  at dotty.tools.dotc.typer.FrontEnd.enterSyms$$anonfun$1(FrontEnd.scala:69)
+  at dotty.runtime.function.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:12)
+  at dotty.tools.dotc.typer.FrontEnd.monitor(FrontEnd.scala:41)
+  at dotty.tools.dotc.typer.FrontEnd.enterSyms(FrontEnd.scala:71)
+  at dotty.tools.dotc.typer.FrontEnd.runOn(FrontEnd.scala:100)
+  at dotty.tools.dotc.Run.runPhases$4$$anonfun$4(Run.scala:158)
+  at dotty.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+  at dotty.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+  at scala.collection.IndexedSeqOptimized.foreach(IndexedSeqOptimized.scala:36)
+  at scala.collection.IndexedSeqOptimized.foreach$(IndexedSeqOptimized.scala:33)
+  at scala.collection.mutable.ArrayOps$ofRef.foreach(ArrayOps.scala:198)
+  at dotty.tools.dotc.Run.runPhases$5(Run.scala:170)
+  at dotty.tools.dotc.Run.compileUnits$$anonfun$1(Run.scala:178)
+  at dotty.runtime.function.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:12)
+  at dotty.tools.dotc.util.Stats$.maybeMonitored(Stats.scala:102)
+  at dotty.tools.dotc.Run.compileUnits(Run.scala:185)
+  at dotty.tools.dotc.Run.compileSources(Run.scala:120)
+  at dotty.tools.dotc.Run.compile(Run.scala:104)
+  at dotty.tools.dotc.Driver.doCompile(Driver.scala:34)
+  at dotty.tools.dotc.Driver.process(Driver.scala:172)
+  at dotty.tools.dotc.Driver.process(Driver.scala:141)
+  at dotty.tools.dotc.Driver.process(Driver.scala:153)
+  at dotty.tools.dotc.Driver.main(Driver.scala:180)
+  at dotty.tools.dotc.Main.main(Main.scala)
+</code></pre> 
+    <p>So that tree was created at:</p> 
+    <pre><code>  at dotty.tools.dotc.ast.desugar$.moduleDef(Desugar.scala:804)
+</code></pre> 
+    <p>Since all the stack frames above it are technical frames executing the tree creation command, and the frame in question is the location where the intent of the tree creation was expressed.</p> 
+    <h3>Via tracer</h3> 
+    <p>Some objects may not be <code>Positioned</code> and hence their creation site is not debuggable via the technique in the section above. Say you target a tree at <code>Typer</code>'s <code>typed</code> method as follows:</p> 
+    <pre><code class="language-scala">if (tree.show == """println("Hello World")""") {
+  val creationSite = "&lt;creation site stack here&gt;"
+  println(creationSite)
+}
+</code></pre> 
+    <p>In other words, you have a reference to the object and want to know were it was created. To do so, go to the class definition of that object. In our case, <code>tree</code> is a <a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/ast/Trees.scala#L52"><code>Tree</code></a>. Now, create a new <code>val</code> member of that type:</p> 
+    <pre><code class="language-scala">val tracer = Thread.currentThread.getStackTrace.mkString("\n")
+</code></pre> 
+    <p>Then, from the <code>typed</code> method (or wherever you want to access the trace):</p> 
+    <pre><code class="language-scala">if (tree.show == """println("Hello World")""") {
+  val creationSite = tree.tracer
+  println(creationSite)
+}
+</code></pre> 
+    <h2>Built-in Logging Architecture</h2> 
+    <p>Dotty has a lot of debug calls scattered throughout the code, most of which are disabled by default. At least three (possibly intertwined) architectures for logging are used for that:</p> 
+    <ul> 
+     <li>Printer</li> 
+     <li>Tracing</li> 
+     <li>Reporter</li> 
+    </ul> 
+    <p>These do not follow any particular system and so probably it will be easier to go with <code>println</code> most of the times instead.</p> 
+    <h3>Printers</h3> 
+    <p>Defined in <a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/config/Printers.scala">Printers.scala</a> as a set of variables, each responsible for its own domain. To enable them, replace <code>noPrinter</code> with <code>default</code>. <a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/typer/Typer.scala#L2226">Example</a> from the code:</p> 
+    <pre><code class="language-scala">typr.println(i"make contextual function $tree / $pt ---&gt; $ifun")
+</code></pre> 
+    <p><code>typr</code> is a printer.</p> 
+    <h3>Tracing</h3> 
+    <p>Defined in <a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/reporting/trace.scala">trace.scala</a>. <a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/typer/Typer.scala#L2232">Example</a> from the code:</p> 
+    <pre><code class="language-scala">trace(i"typing $tree", typr, show = true) { // ...
+</code></pre> 
+    <p>To enable globally, change <a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/config/Config.scala#L164">tracingEnabled</a> to <code>true</code> (will recompile a lot of code).</p> 
+    <p>You also need to set the printer referenced in the call (in the example, <code>typr</code>) to <code>default</code> as explained in the section on printers.</p> 
+    <p>To enable for a single trace, do the following:</p> 
+    <pre><code class="language-scala">trace.force(i"typing $tree", typr, show = true) { // ...
+</code></pre> 
+    <h3>Reporter</h3> 
+    <p>Defined in <a href="https://github.com/lampepfl/dotty/blob/10526a7d0aa8910729b6036ee51942e05b71abf6/compiler/src/dotty/tools/dotc/reporting/Reporter.scala">Reporter.scala</a>. Enables calls such as <code>report.log</code>. To enable, run scalac with <code>-Ylog:typer</code> option.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../scripts/pages.js"></script><script type="text/javascript" src="../../scripts/main.js"></script></body></html>

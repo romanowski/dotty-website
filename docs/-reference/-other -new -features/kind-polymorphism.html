@@ -1,0 +1,45 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Kind Polymorphism</title><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/other-new-features/kind-polymorphism.md////PointingToDeclaration//-1542669386">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="index.html">Other New Features</a>/<a href="../-other -new -features/kind-polymorphism.html">Kind Polymorphism</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Kind Polymorphism"</h1> 
+     <div class="byline"> <a href="/edit/master//"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>Normally type parameters in Scala are partitioned into <em>kinds</em>. First-level types are types of values. Higher-kinded types are type constructors such as <code>List</code> or <code>Map</code>. The kind of a type is indicated by the top type of which it is a subtype. Normal types are subtypes of <code>Any</code>, covariant single argument type constructors such as <code>List</code> are subtypes of <code>[+X] =&gt;&gt; Any</code>, and the <code>Map</code> type constructor is a subtype of <code>[X, +Y] =&gt;&gt; Any</code>.</p> 
+    <p>A type can be used only as prescribed by its kind. Subtypes of <code>Any</code> cannot be applied to type arguments whereas subtypes of <code>[X] =&gt;&gt; Any</code> <em>must</em> be applied to a type argument, unless they are passed to type parameters of the same kind.</p> 
+    <p>Sometimes we would like to have type parameters that can have more than one kind, for instance to define an implicit value that works for parameters of any kind. This is now possible through a form of (<em>subtype</em>) kind polymorphism. Kind polymorphism relies on the special type <code>scala.AnyKind</code> that can be used as an upper bound of a type.</p> 
+    <pre><code class="language-scala">def f[T &lt;: AnyKind] = ...
+</code></pre> 
+    <p>The actual type arguments of <code>f</code> can then be types of arbitrary kinds. So the following would all be legal:</p> 
+    <pre><code class="language-scala">f[Int]
+f[List]
+f[Map]
+f[[X] =&gt;&gt; String]
+</code></pre> 
+    <p>We call type parameters and abstract types with an <code>AnyKind</code> upper bound <em>any-kinded types</em>. Since the actual kind of an any-kinded type is unknown, its usage must be heavily restricted: An any-kinded type can be neither the type of a value, nor can it be instantiated with type parameters. So about the only thing one can do with an any-kinded type is to pass it to another any-kinded type argument. Nevertheless, this is enough to achieve some interesting generalizations that work across kinds, typically through advanced uses of implicits.</p> 
+    <p>(todo: insert good concise example)</p> 
+    <p>Some technical details: <code>AnyKind</code> is a synthesized class just like <code>Any</code>, but without any members. It extends no other class. It is declared <code>abstract</code> and <code>final</code>, so it can be neither instantiated nor extended.</p> 
+    <p><code>AnyKind</code> plays a special role in Scala's subtype system: It is a supertype of all other types no matter what their kind is. It is also assumed to be kind-compatible with all other types. Furthermore, <code>AnyKind</code> is treated as a higher-kinded type (so it cannot be used as a type of values), but at the same time it has no type parameters (so it cannot be instantiated).</p> 
+    <p><strong>Note</strong>: This feature is considered experimental but stable and it can be disabled under compiler flag (i.e. <code>-Yno-kind-polymorphism</code>).</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span><span class="pull-right">Generated by&nbsp;<a href="https://github.com/lampepfl/scala3doc">Scala3doc</a></span></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>
