@@ -1,0 +1,63 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Intersection Types</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/new-types/intersection-types.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="../../New Types/index.html">New Types</a>/<a href="intersection-types.html">Intersection Types</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Intersection Types"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/reference/new-types/intersection-types.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>Used on types, the <code>&amp;</code> operator creates an intersection type.</p> 
+    <h2><a href="#type-checking" id="type-checking" class="anchor"></a>Type Checking</h2> 
+    <p>The type <code>S &amp; T</code> represents values that are of the type <code>S</code> and <code>T</code> at the same time.</p> 
+    <pre><code class="language-scala">trait Resettable {
+  def reset(): Unit
+}
+trait Growable[T] {
+  def add(t: T): Unit
+}
+def f(x: Resettable &amp; Growable[String]) = {
+  x.reset()
+  x.add("first")
+}
+</code></pre> 
+    <p>The parameter <code>x</code> is required to be <em>both</em> a <code>Resettable</code> and a <code>Growable[String]</code>.</p> 
+    <p>The members of an intersection type <code>A &amp; B</code> are all the members of <code>A</code> and all the members of <code>B</code>. For instance <code>Resettable &amp; Growable[String]</code> has member methods <code>reset</code> and <code>add</code>.</p> 
+    <p><code>&amp;</code> is <em>commutative</em>: <code>A &amp; B</code> is the same type as <code>B &amp; A</code>.</p> 
+    <p>If a member appears in both <code>A</code> and <code>B</code>, its type in <code>A &amp; B</code> is the intersection of its type in <code>A</code> and its type in <code>B</code>. For instance, assume the definitions:</p> 
+    <pre><code class="language-scala">trait A {
+  def children: List[A]
+}
+trait B {
+  def children: List[B]
+}
+val x: A &amp; B = new C
+val ys: List[A &amp; B] = x.children
+</code></pre> 
+    <p>The type of <code>children</code> in <code>A &amp; B</code> is the intersection of <code>children</code>'s type in <code>A</code> and its type in <code>B</code>, which is <code>List[A] &amp; List[B]</code>. This can be further simplified to <code>List[A &amp; B]</code> because <code>List</code> is covariant.</p> 
+    <p>One might wonder how the compiler could come up with a definition for <code>children</code> of type <code>List[A &amp; B]</code> since what is given are <code>children</code> definitions of type <code>List[A]</code> and <code>List[B]</code>. The answer is the compiler does not need to. <code>A &amp; B</code> is just a type that represents a set of requirements for values of the type. At the point where a value is <em>constructed</em>, one must make sure that all inherited members are correctly defined. So if one defines a class <code>C</code> that inherits <code>A</code> and <code>B</code>, one needs to give at that point a definition of a <code>children</code> method with the required type.</p> 
+    <pre><code class="language-scala">class C extends A with B {
+  def children: List[A &amp; B] = ???
+}
+</code></pre> 
+    <p><a href="./intersection-types-spec.md">More details</a></p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

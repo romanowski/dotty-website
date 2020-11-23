@@ -1,0 +1,220 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Option-less pattern matching</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/changed-features/pattern-matching.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="../../Other Changed Features/index.html">Other Changed Features</a>/<a href="pattern-matching.html">Option-less pattern matching</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Option-less pattern matching"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/reference/changed-features/pattern-matching.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>Dotty implementation of pattern matching was greatly simplified compared to scalac. From a user perspective, this means that Dotty generated patterns are a <em>lot</em> easier to debug, as variables all show up in debug modes and positions are correctly preserved.</p> 
+    <p>Dotty supports a superset of scalac's <a href="https://www.scala-lang.org/files/archive/spec/2.13/08-pattern-matching.html#extractor-patterns">extractors</a>.</p> 
+    <h2><a href="#extractors" id="extractors" class="anchor"></a>Extractors</h2> 
+    <p>Extractors are objects that expose a method <code>unapply</code> or <code>unapplySeq</code>:</p> 
+    <pre><code class="language-Scala">def unapply[A](x: T)(implicit x: B): U
+def unapplySeq[A](x: T)(implicit x: B): U
+</code></pre> 
+    <p>Extractors expose the method <code>unapply</code> are called fixed-arity extractors, which work with patterns of fixed arity. Extractors expose the method <code>unapplySeq</code> are called variadic extractors, which enables variadic patterns.</p> 
+    <h3><a href="#fixed-arity-extractors" id="fixed-arity-extractors" class="anchor"></a>Fixed-Arity Extractors</h3> 
+    <p>Fixed-arity extractors expose the following signature:</p> 
+    <pre><code class="language-Scala">def unapply[A](x: T)(implicit x: B): U
+</code></pre> 
+    <p>The type <code>U</code> conforms to one of the following matches:</p> 
+    <ul> 
+     <li>Boolean match</li> 
+     <li>Product match</li> 
+    </ul> 
+    <p>Or <code>U</code> conforms to the type <code>R</code>:</p> 
+    <pre><code class="language-Scala">type R = {
+  def isEmpty: Boolean
+  def get: S
+}
+</code></pre> 
+    <p>and <code>S</code> conforms to one of the following matches:</p> 
+    <ul> 
+     <li>single match</li> 
+     <li>name-based match</li> 
+    </ul> 
+    <p>The former form of <code>unapply</code> has higher precedence, and <em>single match</em> has higher precedence over <em>name-based match</em>.</p> 
+    <p>A usage of a fixed-arity extractor is irrefutable if one of the following condition holds:</p> 
+    <ul> 
+     <li><code>U = true</code></li> 
+     <li>the extractor is used as a product match</li> 
+     <li><code>U = Some[T]</code> (for Scala2 compatibility)</li> 
+     <li><code>U &lt;: R</code> and <code>U &lt;: { def isEmpty: false }</code></li> 
+    </ul> 
+    <h3><a href="#variadic-extractors" id="variadic-extractors" class="anchor"></a>Variadic Extractors</h3> 
+    <p>Variadic extractors expose the following signature:</p> 
+    <pre><code class="language-Scala">def unapplySeq[A](x: T)(implicit x: B): U
+</code></pre> 
+    <p>The type <code>U</code> conforms to one of the following matches:</p> 
+    <ul> 
+     <li>sequence match</li> 
+     <li>product-sequence match</li> 
+    </ul> 
+    <p>Or <code>U</code> conforms to the type <code>R</code>:</p> 
+    <pre><code class="language-Scala">type R = {
+  def isEmpty: Boolean
+  def get: S
+}
+</code></pre> 
+    <p>and <code>S</code> conforms to one of the two matches above.</p> 
+    <p>The former form of <code>unapplySeq</code> has higher priority, and <em>sequence match</em> has higher precedence over <em>product-sequence match</em>.</p> 
+    <p>A usage of a variadic extractor is irrefutable if one of the following condition holds:</p> 
+    <ul> 
+     <li>the extractor is used directly as a sequence match or product-sequence match</li> 
+     <li><code>U = Some[T]</code> (for Scala2 compatibility)</li> 
+     <li><code>U &lt;: R</code> and <code>U &lt;: { def isEmpty: false }</code></li> 
+    </ul> 
+    <h2><a href="#boolean-match" id="boolean-match" class="anchor"></a>Boolean Match</h2> 
+    <ul> 
+     <li><code>U =:= Boolean</code></li> 
+     <li>Pattern-matching on exactly <code>0</code> patterns</li> 
+    </ul> 
+    <p>For example:</p> <!-- To be kept in sync with tests/new/patmat-spec.scala --> 
+    <pre><code class="language-scala">object Even {
+  def unapply(s: String): Boolean = s.size % 2 == 0
+}
+
+"even" match {
+  case s @ Even() =&gt; println(s"$s has an even number of characters")
+  case s          =&gt; println(s"$s has an odd number of characters")
+}
+// even has an even number of characters
+</code></pre> 
+    <h2><a href="#product-match" id="product-match" class="anchor"></a>Product Match</h2> 
+    <ul> 
+     <li><code>U &lt;: Product</code></li> 
+     <li><code>N &gt; 0</code> is the maximum number of consecutive (parameterless <code>def</code> or <code>val</code>) <code>_1: P1</code> ... <code>_N: PN</code> members in <code>U</code></li> 
+     <li>Pattern-matching on exactly <code>N</code> patterns with types <code>P1, P2, ..., PN</code></li> 
+    </ul> 
+    <p>For example:</p> <!-- To be kept in sync with tests/new/patmat-spec.scala --> 
+    <pre><code class="language-scala">class FirstChars(s: String) extends Product {
+  def _1 = s.charAt(0)
+  def _2 = s.charAt(1)
+
+  // Not used by pattern matching: Product is only used as a marker trait.
+  def canEqual(that: Any): Boolean = ???
+  def productArity: Int = ???
+  def productElement(n: Int): Any = ???
+}
+
+object FirstChars {
+  def unapply(s: String): FirstChars = new FirstChars(s)
+}
+
+"Hi!" match {
+  case FirstChars(char1, char2) =&gt;
+    println(s"First: $char1; Second: $char2")
+}
+// First: H; Second: i
+</code></pre> 
+    <h2><a href="#single-match" id="single-match" class="anchor"></a>Single Match</h2> 
+    <ul> 
+     <li>If there is exactly <code>1</code> pattern, pattern-matching on <code>1</code> pattern with type <code>U</code></li> 
+    </ul> <!-- To be kept in sync with tests/new/patmat-spec.scala --> 
+    <pre><code class="language-scala">class Nat(val x: Int) {
+  def get: Int = x
+  def isEmpty = x &lt; 0
+}
+
+object Nat {
+  def unapply(x: Int): Nat = new Nat(x)
+}
+
+5 match {
+  case Nat(n) =&gt; println(s"$n is a natural number")
+  case _      =&gt; ()
+}
+// 5 is a natural number
+</code></pre> 
+    <h2><a href="#name-based-match" id="name-based-match" class="anchor"></a>Name-based Match</h2> 
+    <ul> 
+     <li><code>N &gt; 1</code> is the maximum number of consecutive (parameterless <code>def</code> or <code>val</code>) <code>_1: P1 ... _N: PN</code> members in <code>U</code></li> 
+     <li>Pattern-matching on exactly <code>N</code> patterns with types <code>P1, P2, ..., PN</code></li> 
+    </ul> 
+    <pre><code class="language-Scala">object ProdEmpty {
+  def _1: Int = ???
+  def _2: String = ???
+  def isEmpty = true
+  def unapply(s: String): this.type = this
+  def get = this
+}
+
+"" match {
+  case ProdEmpty(_, _) =&gt; ???
+  case _ =&gt; ()
+}
+</code></pre> 
+    <h2><a href="#sequence-match" id="sequence-match" class="anchor"></a>Sequence Match</h2> 
+    <ul> 
+     <li><code>U &lt;: X</code>, <code>T2</code> and <code>T3</code> conform to <code>T1</code></li> 
+    </ul> 
+    <pre><code class="language-Scala">type X = {
+  def lengthCompare(len: Int): Int // or, `def length: Int`
+  def apply(i: Int): T1
+  def drop(n: Int): scala.Seq[T2]
+  def toSeq: scala.Seq[T3]
+}
+</code></pre> 
+    <ul> 
+     <li>Pattern-matching on <em>exactly</em> <code>N</code> simple patterns with types <code>T1, T1, ..., T1</code>, where <code>N</code> is the runtime size of the sequence, or</li> 
+     <li>Pattern-matching on <code>&gt;= N</code> simple patterns and <em>a vararg pattern</em> (e.g., <code>xs: _*</code>) with types <code>T1, T1, ..., T1, Seq[T1]</code>, where <code>N</code> is the minimum size of the sequence.</li> 
+    </ul> <!-- To be kept in sync with tests/new/patmat-spec.scala --> 
+    <pre><code class="language-scala">object CharList {
+  def unapplySeq(s: String): Option[Seq[Char]] = Some(s.toList)
+}
+
+"example" match {
+  case CharList(c1, c2, c3, c4, _, _, _) =&gt;
+    println(s"$c1,$c2,$c3,$c4")
+  case _ =&gt;
+    println("Expected *exactly* 7 characters!")
+}
+// e,x,a,m
+</code></pre> 
+    <h2><a href="#product-sequence-match" id="product-sequence-match" class="anchor"></a>Product-Sequence Match</h2> 
+    <ul> 
+     <li><code>U &lt;: Product</code></li> 
+     <li><code>N &gt; 0</code> is the maximum number of consecutive (parameterless <code>def</code> or <code>val</code>) <code>_1: P1</code> ... <code>_N: PN</code> members in <code>U</code></li> 
+     <li><code>PN</code> conforms to the signature <code>X</code> defined in Seq Pattern</li> 
+     <li>Pattern-matching on exactly <code>&gt;= N</code> patterns, the first <code>N - 1</code> patterns have types <code>P1, P2, ... P(N-1)</code>, the type of the remaining patterns are determined as in Seq Pattern.</li> 
+    </ul> 
+    <pre><code class="language-Scala">class Foo(val name: String, val children: Int *)
+object Foo {
+  def unapplySeq(f: Foo): Option[(String, Seq[Int])] = Some((f.name, f.children))
+}
+
+def foo(f: Foo) = f match {
+  case Foo(name, ns : _*) =&gt;
+  case Foo(name, x, y, ns : _*) =&gt;
+}
+</code></pre> 
+    <p>There are plans for further simplification, in particular to factor out <em>product match</em> and <em>name-based match</em> into a single type of extractor.</p> 
+    <h2><a href="#type-testing" id="type-testing" class="anchor"></a>Type testing</h2> 
+    <p>Abstract type testing with <code>ClassTag</code> is replaced with <code>TypeTest</code> or the alias <code>Typeable</code>.</p> 
+    <ul> 
+     <li>pattern <code>_: X</code> for an abstract type requires a <code>TypeTest</code> in scope</li> 
+     <li>pattern <code>x @ X()</code> for an unapply that takes an abstract type requires a <code>TypeTest</code> in scope</li> 
+    </ul> 
+    <p><a href="../other-new-features/type-test.md">More details on TypeTest</a></p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

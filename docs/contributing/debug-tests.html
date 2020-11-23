@@ -1,0 +1,101 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Tests for Debuggability</title><link rel="shortcut icon" type="image/x-icon" href="../../favicon.ico"></link><script type="text/javascript" src="../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../styles/nord-light.css"></link><link rel="stylesheet" href="../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/diagram.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../styles/filter-bar.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../css/dottydoc.css"></link><link rel="stylesheet" href="../../css/color-brewer.css"></link><script type="text/javascript" src="../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/contributing/debug-tests.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../index.html"></a>/<a href="debug-tests.html">Tests for Debuggability</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>Tests for Debuggability</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/contributing/debug-tests.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <h2><a href="#tools-requires" id="tools-requires" class="anchor"></a>Tools Requires</h2> 
+    <ul> 
+     <li>JDB</li> 
+     <li>expect</li> 
+    </ul> 
+    <p>Both are usually pre-installed on macOS and linux distributions.</p> 
+    <h2><a href="#debug-manually-with-jdb" id="debug-manually-with-jdb" class="anchor"></a>Debug Manually with JDB</h2> 
+    <p>First, compile the file <code>tests/debug/while.scala</code>:</p> 
+    <pre><code class="language-shell">$ scalac tests/debug/while.scala
+</code></pre> 
+    <p>Second, run the compiled class with debugging enabled (suppose the main class is <code>Test</code>):</p> 
+    <pre><code class="language-shell">$ scala -d Test
+</code></pre> 
+    <p>Third, start JDB:</p> 
+    <pre><code class="language-shell">$ jdb -attach 5005 -sourcepath tests/debug/
+</code></pre> 
+    <p>You can run <code>help</code> for commands that supported by JDB.</p> 
+    <h2><a href="#debug-automatically-with-expect" id="debug-automatically-with-expect" class="anchor"></a>Debug Automatically with Expect</h2> 
+    <h3><a href="#1-annotate-the-source-code-with-debug-information" id="1-annotate-the-source-code-with-debug-information" class="anchor"></a>1. Annotate the source code with debug information.</h3> 
+    <p>Following file (<code>tests/debug/while.scala</code>) is an example of annotated source code:</p> 
+    <pre><code class="language-Scala">object Test {
+
+  def main(args: Array[String]): Unit = {
+    var a = 1 + 2
+    a = a + 3
+    a = 4 + 5 // [break] [step: while]
+
+    while (a * 8 &lt; 100) { // [step: a += 1]
+      a += 1              // [step: while] [cont: print]
+    }
+
+    print(a) // [break] [cont]
+  }
+}
+</code></pre> 
+    <p>The debugging information is annotated as comments to the code in brackets:</p> 
+    <pre><code class="language-scala">val x = f(3) // [break] [next: line=5]
+val y = 5
+</code></pre> 
+    <ol> 
+     <li>A JDB command must be wrapped in brackets, like <code>[step]</code>. All JDB commands can be used.</li> 
+     <li>To check output of JDB for a command, use <code>[cmd: expect]</code>.</li> 
+     <li>If <code>expect</code> is wrapped in double quotes, regex is supported.</li> 
+     <li>Break commands are collected and set globally.</li> 
+     <li>Other commands will be send to jdb in the order they appear in the source file</li> 
+    </ol> 
+    <p>Note that JDB uses line number starts from 1.</p> 
+    <h3><a href="#2-generate-expect-file" id="2-generate-expect-file" class="anchor"></a>2. Generate Expect File</h3> 
+    <p>Now we can run the following command to generate an expect file:</p> 
+    <pre><code class="language-shell">compiler/test/debug/Gen tests/debug/while.scala &gt; robot
+</code></pre> 
+    <h3><a href="#3-run-the-test" id="3-run-the-test" class="anchor"></a>3. Run the Test</h3> 
+    <p>First, compile the file <code>tests/debug/while.scala</code>:</p> 
+    <pre><code class="language-shell">$ scalac tests/debug/while.scala
+</code></pre> 
+    <p>Second, run the compiled class with debugging enabled:</p> 
+    <pre><code class="language-shell">$ scala -d Test
+</code></pre> 
+    <p>Finally, run the expect script:</p> 
+    <pre><code class="language-shell">expect robot
+</code></pre> 
+    <h2><a href="#other-tips" id="other-tips" class="anchor"></a>Other Tips</h2> 
+    <h3><a href="#adding-a-new-test" id="adding-a-new-test" class="anchor"></a>Adding a New Test</h3> 
+    <p>Just put the annotated source file under <code>tests/debug/</code>, it will be automatically run by the test infrastructure.</p> 
+    <h3><a href="#run-all-debug-tests" id="run-all-debug-tests" class="anchor"></a>Run All Debug Tests</h3> 
+    <pre><code class="language-shell">./compiler/test/debug/test
+</code></pre> 
+    <h3><a href="#debug-a-debug-test" id="debug-a-debug-test" class="anchor"></a>Debug a Debug Test</h3> 
+    <p>If there is any problem with a debug test, first check if the problematic test work correctly with JDB without automation.</p> 
+    <p>Then, uncomment the following line in the generated expect file to check the output of expect:</p> 
+    <pre><code># exp_internal 1
+</code></pre> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../scripts/pages.js"></script><script type="text/javascript" src="../../scripts/main.js"></script></body></html>

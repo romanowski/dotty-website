@@ -1,0 +1,63 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Pattern Bindings</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/changed-features/pattern-bindings.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="../../Other Changed Features/index.html">Other Changed Features</a>/<a href="pattern-bindings.html">Pattern Bindings</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Pattern Bindings"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/reference/changed-features/pattern-bindings.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>In Scala 2, pattern bindings in <code>val</code> definitions and <code>for</code> expressions are loosely typed. Potentially failing matches are still accepted at compile-time, but may influence the program's runtime behavior. From Scala 3.1 on, type checking rules will be tightened so that errors are reported at compile-time instead.</p> 
+    <h2><a href="#bindings-in-pattern-definitions" id="bindings-in-pattern-definitions" class="anchor"></a>Bindings in Pattern Definitions</h2> 
+    <pre><code class="language-scala">val xs: List[Any] = List(1, 2, 3)
+val (x: String) :: _ = xs   // error: pattern's type String is more specialized
+                            // than the right hand side expression's type Any
+</code></pre> 
+    <p>This code gives a compile-time error in Scala 3.1 (and also in Scala 3.0 under the <code>-source 3.1</code> setting) whereas it will fail at runtime with a <code>ClassCastException</code> in Scala 2. In Scala 3.1, a pattern binding is only allowed if the pattern is <em>irrefutable</em>, that is, if the right-hand side's type conforms to the pattern's type. For instance, the following is OK:</p> 
+    <pre><code class="language-scala">  val pair = (1, true)
+  val (x, y) = pair
+</code></pre> 
+    <p>Sometimes one wants to decompose data anyway, even though the pattern is refutable. For instance, if at some point one knows that a list <code>elems</code> is non-empty one might want to decompose it like this:</p> 
+    <pre><code class="language-scala">val first :: rest = elems   // error
+</code></pre> 
+    <p>This works in Scala 2. In fact it is a typical use case for Scala 2's rules. But in Scala 3.1 it will give a type error. One can avoid the error by marking the pattern with an @unchecked annotation:</p> 
+    <pre><code class="language-scala">val first :: rest : @unchecked = elems   // OK
+</code></pre> 
+    <p>This will make the compiler accept the pattern binding. It might give an error at runtime instead, if the underlying assumption that <code>elems</code> can never be empty is wrong.</p> 
+    <h2><a href="#pattern-bindings-in-for-expressions" id="pattern-bindings-in-for-expressions" class="anchor"></a>Pattern Bindings in For Expressions</h2> 
+    <p>Analogous changes apply to patterns in <code>for</code> expressions. For instance:</p> 
+    <pre><code class="language-scala">val elems: List[Any] = List((1, 2), "hello", (3, 4))
+for ((x, y) &lt;- elems) yield (y, x) // error: pattern's type (Any, Any) is more specialized
+                                   // than the right hand side expression's type Any
+</code></pre> 
+    <p>This code gives a compile-time error in Scala 3.1 whereas in Scala 2 the list <code>elems</code> is filtered to retain only the elements of tuple type that match the pattern <code>(x, y)</code>. The filtering functionality can be obtained in Scala 3 by prefixing the pattern with <code>case</code>:</p> 
+    <pre><code class="language-scala">  for (case (x, y) &lt;- elems) yield (y, x)  // returns List((2, 1), (4, 3))
+</code></pre> 
+    <h2><a href="#syntax-changes" id="syntax-changes" class="anchor"></a>Syntax Changes</h2> 
+    <p>There are two syntax changes relative to Scala 2: First, pattern definitions can carry ascriptions such as <code>: @unchecked</code>. Second, generators in for expressions may be prefixed with <code>case</code>.</p> 
+    <pre><code>PatDef         ::=  ids [‘:’ Type] ‘=’ Expr
+                 |  Pattern2 [‘:’ Type | Ascription] ‘=’ Expr
+Generator      ::=  [‘case’] Pattern1 ‘&lt;-’ Expr
+</code></pre> 
+    <h2><a href="#migration" id="migration" class="anchor"></a>Migration</h2> 
+    <p>The new syntax is supported in Dotty and Scala 3.0. However, to enable smooth cross compilation between Scala 2 and Scala 3, the changed behavior and additional type checks are only enabled under the <code>-source 3.1</code> setting. They will be enabled by default in version 3.1 of the language.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

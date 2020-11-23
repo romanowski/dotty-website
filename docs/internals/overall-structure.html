@@ -1,0 +1,177 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Dotty Overall Structure</title><link rel="shortcut icon" type="image/x-icon" href="../../favicon.ico"></link><script type="text/javascript" src="../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../styles/nord-light.css"></link><link rel="stylesheet" href="../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/diagram.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../styles/filter-bar.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../css/dottydoc.css"></link><link rel="stylesheet" href="../../css/color-brewer.css"></link><script type="text/javascript" src="../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/internals/overall-structure.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../index.html"></a>/<a href="../Internals/index.html">Internals</a>/<a href="overall-structure.html">Dotty Overall Structure</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Dotty Overall Structure"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/internals/overall-structure.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>The compiler code is found in package <a href="https://github.com/lampepfl/dotty/tree/master/compiler/src/dotty/tools">dotty.tools</a>. It spans the following three sub-packages:</p> 
+    <pre><code>backend     Compiler backends (currently for JVM and JS)
+   dotc     The main compiler
+     io     Helper modules for file access and classpath handling.
+</code></pre> 
+    <p>The <a href="https://github.com/lampepfl/dotty/tree/master/compiler/src/dotty/tools/dotc">dotc</a> package contains some main classes that can be run as separate programs. The most important one is class <a href="https://github.com/lampepfl/dotty/blob/master/compiler/src/dotty/tools/dotc/Main.scala">Main</a>. <code>Main</code> inherits from <a href="https://github.com/lampepfl/dotty/blob/master/compiler/src/dotty/tools/dotc/Driver.scala">Driver</a> which contains the highest level functions for starting a compiler and processing some sources. <code>Driver</code> in turn is based on two other high-level classes, <a href="https://github.com/lampepfl/dotty/blob/master/compiler/src/dotty/tools/dotc/Compiler.scala">Compiler</a> and <a href="https://github.com/lampepfl/dotty/blob/master/compiler/src/dotty/tools/dotc/Run.scala">Run</a>.</p> 
+    <h2><a href="#package-structure" id="package-structure" class="anchor"></a>Package Structure</h2> 
+    <p>Most functionality of <code>scalac</code> is implemented in subpackages of <code>dotc</code>. Here's a list of sub-packages and their focus.</p> 
+    <pre><code>.
+├── ast                 // Abstract syntax trees
+├── config              // Compiler configuration, settings, platform specific definitions.
+├── core                // Core data structures and operations, with specific subpackages for:
+│&nbsp;&nbsp; ├── classfile       // Reading of Java classfiles into core data structures
+│&nbsp;&nbsp; ├── tasty           // Reading and writing of TASTY files to/from core data structures
+│&nbsp;&nbsp; └── unpickleScala2  // Reading of Scala2 symbol information into core data structures
+├── parsing             // Scanner and parser
+├── printing            // Pretty-printing trees, types and other data
+├── repl                // The interactive REPL
+├── reporting           // Reporting of error messages, warnings and other info.
+├── rewrites            // Helpers for rewriting Scala 2's constructs into dotty's.
+├── semanticdb          // Helpers for exporting semanticdb from trees.
+├── transform           // Miniphases and helpers for tree transformations.
+├── typer               // Type-checking and other frontend phases
+└── util                // General purpose utility classes and modules.
+</code></pre> 
+    <h2><a href="#contexts" id="contexts" class="anchor"></a>Contexts</h2> 
+    <p><code>scalac</code> has almost no global state (the only significant bit of global state is the name table, which is used to hash strings into unique names). Instead, all essential bits of information that can vary over a compiler run are collected in a <a href="https://github.com/lampepfl/dotty/blob/master/compiler/src/dotty/tools/dotc/core/Contexts.scala">Context</a>. Most methods in <code>scalac</code> take a <code>Context</code> value as an implicit parameter.</p> 
+    <p>Contexts give a convenient way to customize values in some part of the call-graph. To run, e.g. some compiler function <code>f</code> at a given phase <code>phase</code>, we invoke <code>f</code> with an explicit context parameter, like this</p> 
+    <pre><code class="language-scala">f(/*normal args*/)(using ctx.withPhase(phase))
+</code></pre> 
+    <p>This assumes that <code>f</code> is defined in the way most compiler functions are:</p> 
+    <pre><code class="language-scala">def f(/*normal parameters*/)(implicit ctx: Context) ...
+</code></pre> 
+    <p>Compiler code follows the convention that all implicit <code>Context</code> parameters are named <code>ctx</code>. This is important to avoid implicit ambiguities in the case where nested methods contain each a Context parameters. The common name ensures then that the implicit parameters properly shadow each other.</p> 
+    <p>Sometimes we want to make sure that implicit contexts are not captured in closures or other long-lived objects, be it because we want to enforce that nested methods each get their own implicit context, or because we want to avoid a space leak in the case where a closure can survive several compiler runs. A typical case is a completer for a symbol representing an external class, which produces the attributes of the symbol on demand, and which might never be invoked. In that case we follow the convention that any context parameter is explicit, not implicit, so we can track where it is used, and that it has a name different from <code>ctx</code>. Commonly used is <code>ictx</code> for "initialization context".</p> 
+    <p>With these two conventions in place, it has turned out that implicit contexts work amazingly well as a device for dependency injection and bulk parameterization. There is of course always the danger that an unexpected implicit will be passed, but in practice this has not turned out to be much of a problem.</p> 
+    <h2><a href="#compiler-phases" id="compiler-phases" class="anchor"></a>Compiler Phases</h2> 
+    <p>Seen from a temporal perspective, the <code>scalac</code> compiler consists of a list of phases. The current list of phases is specified in class <a href="https://github.com/lampepfl/dotty/blob/master/compiler/src/dotty/tools/dotc/Compiler.scala">Compiler</a> as follows:</p> 
+    <pre><code class="language-scala">  def phases: List[List[Phase]] =
+  frontendPhases ::: picklerPhases ::: transformPhases ::: backendPhases
+
+  /** Phases dealing with the frontend up to trees ready for TASTY pickling */
+  protected def frontendPhases: List[List[Phase]] =
+    List(new FrontEnd) ::           // Compiler frontend: scanner, parser, namer, typer
+    List(new YCheckPositions) ::    // YCheck positions
+    List(new Staging) ::            // Check PCP, heal quoted types and expand macros
+    List(new sbt.ExtractDependencies) :: // Sends information on classes' dependencies to sbt via callbacks
+    List(new semanticdb.ExtractSemanticDB) :: // Extract info into .semanticdb files
+    List(new PostTyper) ::          // Additional checks and cleanups after type checking
+    List(new sbt.ExtractAPI) ::     // Sends a representation of the API of classes to sbt via callbacks
+    List(new SetRootTree) ::        // Set the `rootTreeOrProvider` on class symbols
+    Nil
+
+  /** Phases dealing with TASTY tree pickling and unpickling */
+  protected def picklerPhases: List[List[Phase]] =
+    List(new Pickler) ::            // Generate TASTY info
+    List(new PickleQuotes) ::       // Turn quoted trees into explicit run-time data structures
+    Nil
+
+  /** Phases dealing with the transformation from pickled trees to backend trees */
+  protected def transformPhases: List[List[Phase]] =
+    List(new FirstTransform,         // Some transformations to put trees into a canonical form
+         new CheckReentrant,         // Internal use only: Check that compiled program has no data races involving global vars
+         new ElimPackagePrefixes,    // Eliminate references to package prefixes in Select nodes
+         new CookComments,           // Cook the comments: expand variables, doc, etc.
+         new CompleteJavaEnums) ::   // Fill in constructors for Java enums
+    List(new CheckStatic,            // Check restrictions that apply to @static members
+         new ElimRepeated,           // Rewrite vararg parameters and arguments
+         new ExpandSAMs,             // Expand single abstract method closures to anonymous classes
+         new ProtectedAccessors,     // Add accessors for protected members
+         new ExtensionMethods,       // Expand methods of value classes with extension methods
+         new CacheAliasImplicits,    // Cache RHS of parameterless alias implicits
+         new ShortcutImplicits,      // Allow implicit functions without creating closures
+         new ByNameClosures,         // Expand arguments to by-name parameters to closures
+         new HoistSuperArgs,         // Hoist complex arguments of supercalls to enclosing scope
+         new ClassOf,                // Expand `Predef.classOf` calls.
+         new RefChecks) ::           // Various checks mostly related to abstract members and overriding
+    List(new ElimOpaque,             // Turn opaque into normal aliases
+         new TryCatchPatterns,       // Compile cases in try/catch
+         new PatternMatcher,         // Compile pattern matches
+         new ExplicitOuter,          // Add accessors to outer classes from nested ones.
+         new ExplicitSelf,           // Make references to non-trivial self types explicit as casts
+         new StringInterpolatorOpt,  // Optimizes raw and s string interpolators by rewriting them to string concatentations
+         new CrossCastAnd) ::        // Normalize selections involving intersection types.
+    List(new PruneErasedDefs,        // Drop erased definitions from scopes and simplify erased expressions
+         new VCInlineMethods,        // Inlines calls to value class methods
+         new SeqLiterals,            // Express vararg arguments as arrays
+         new InterceptedMethods,     // Special handling of `==`, `|=`, `getClass` methods
+         new Getters,                // Replace non-private vals and vars with getter defs (fields are added later)
+         new ElimByName,             // Expand by-name parameter references
+         new CollectNullableFields,  // Collect fields that can be nulled out after use in lazy initialization
+         new ElimOuterSelect,        // Expand outer selections
+         new AugmentScala2Traits,    // Augments Scala2 traits so that super accessors are made non-private
+         new ResolveSuper,           // Implement super accessors
+         new FunctionXXLForwarders,  // Add forwarders for FunctionXXL apply method
+         new TupleOptimizations,     // Optimize generic operations on tuples
+         new ArrayConstructors) ::   // Intercept creation of (non-generic) arrays and intrinsify.
+    List(new Erasure) ::             // Rewrite types to JVM model, erasing all type parameters, abstract types and refinements.
+    List(new ElimErasedValueType,    // Expand erased value types to their underlying implmementation types
+         new VCElideAllocations,     // Peep-hole optimization to eliminate unnecessary value class allocations
+         new ArrayApply,             // Optimize `scala.Array.apply([....])` and `scala.Array.apply(..., [....])` into `[...]`
+         new ElimPolyFunction,       // Rewrite PolyFunction subclasses to FunctionN subclasses
+         new TailRec,                // Rewrite tail recursion to loops
+         new Mixin,                  // Expand trait fields and trait initializers
+         new LazyVals,               // Expand lazy vals
+         new Memoize,                // Add private fields to getters and setters
+         new NonLocalReturns,        // Expand non-local returns
+         new CapturedVars) ::        // Represent vars captured by closures as heap objects
+    List(new Constructors,           // Collect initialization code in primary constructors
+                                        // Note: constructors changes decls in transformTemplate, no InfoTransformers should be added after it
+         new FunctionalInterfaces,   // Rewrites closures to implement @specialized types of Functions.
+         new Instrumentation,        // Count closure allocations under -Yinstrument-closures
+         new GetClass,               // Rewrites getClass calls on primitive types.
+         new LiftTry) ::             // Put try expressions that might execute on non-empty stacks into their own methods their implementations
+    List(new LambdaLift,             // Lifts out nested functions to class scope, storing free variables in environments
+                                        // Note: in this mini-phase block scopes are incorrect. No phases that rely on scopes should be here
+         new ElimStaticThis) ::      // Replace `this` references to static objects by global identifiers
+    List(new Flatten,                // Lift all inner classes to package scope
+         new RenameLifted,           // Renames lifted classes to local numbering scheme
+         new TransformWildcards,     // Replace wildcards with default values
+         new MoveStatics,            // Move static methods from companion to the class itself
+         new ExpandPrivate,          // Widen private definitions accessed from nested classes
+         new RestoreScopes,          // Repair scopes rendered invalid by moving definitions in prior phases of the group
+         new SelectStatic,           // get rid of selects that would be compiled into GetStatic
+         new sjs.JUnitBootstrappers, // Generate JUnit-specific bootstrapper classes for Scala.js (not enabled by default)
+         new CollectEntryPoints,     // Find classes with main methods
+         new CollectSuperCalls) ::   // Find classes that are called with super
+    Nil
+
+  /** Generate the output of the compilation */
+  protected def backendPhases: List[List[Phase]] =
+    List(new sjs.GenSJSIR) ::        // Generate .sjsir files for Scala.js (not enabled by default)
+    List(new GenBCode) ::            // Generate JVM bytecode
+    Nil
+</code></pre> 
+    <p>Note that phases are grouped, so the <code>phases</code> method is of type <code>List[List[Phase]]</code>. The idea is that all phases in a group are <em>fused</em> into a single tree traversal. That way, phases can be kept small (most phases perform a single function) without requiring an excessive number of tree traversals (which are costly, because they have generally bad cache locality).</p> 
+    <p>Phases fall into four categories:</p> 
+    <ul> 
+     <li> <p>Frontend phases: <code>Frontend</code>, <code>PostTyper</code> and <code>Pickler</code>. <code>FrontEnd</code> parses the source programs and generates untyped abstract syntax trees, which are then typechecked and transformed into typed abstract syntax trees. <code>PostTyper</code> performs checks and cleanups that require a fully typed program. In particular, it</p> 
+      <ul> 
+       <li>creates super accessors representing <code>super</code> calls in traits</li> 
+       <li>creates implementations of synthetic (compiler-implemented) methods</li> 
+       <li>avoids storing parameters passed unchanged from subclass to superclass in duplicate fields.</li> 
+      </ul> <p>Finally <code>Pickler</code> serializes the typed syntax trees produced by the frontend as TASTY data structures.</p> </li> 
+     <li> <p>High-level transformations: All phases from <code>FirstTransform</code> to <code>Erasure</code>. Most of these phases transform syntax trees, expanding high-level constructs to more primitive ones. The last phase in the group, <code>Erasure</code> translates all types into types supported directly by the JVM. To do this, it performs another type checking pass, but using the rules of the JVM's type system instead of Scala's.</p> </li> 
+     <li> <p>Low-level transformations: All phases from <code>ElimErasedValueType</code> to <code>CollectSuperCalls</code>. These further transform trees until they are essentially a structured version of Java bytecode.</p> </li> 
+     <li>Code generators: These map the transformed trees to Java classfiles or .sjsir files.</li> 
+    </ul> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../scripts/pages.js"></script><script type="text/javascript" src="../../scripts/main.js"></script></body></html>

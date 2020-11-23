@@ -1,0 +1,74 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Getting Started: Users</title><link rel="shortcut icon" type="image/x-icon" href="../../favicon.ico"></link><script type="text/javascript" src="../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../styles/nord-light.css"></link><link rel="stylesheet" href="../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/diagram.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../styles/filter-bar.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../css/dottydoc.css"></link><link rel="stylesheet" href="../../css/color-brewer.css"></link><script type="text/javascript" src="../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/usage/getting-started.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../index.html"></a>/<a href="../Usage/index.html">Usage</a>/<a href="getting-started.html">Getting Started: Users</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>Getting Started: Users</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/usage/getting-started.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <h2><a href="#trying-out-dotty" id="trying-out-dotty" class="anchor"></a>Trying out Dotty</h2> 
+    <h3><a href="#in-your-web-browser" id="in-your-web-browser" class="anchor"></a>In your web browser</h3> 
+    <p><a href="https://scastie.scala-lang.org/?target=dotty">Scastie</a>, the online Scala playground, supports Dotty. This is an easy way to try Dotty without installing anything, directly in your browser.</p> 
+    <h3><a href="#sbt" id="sbt" class="anchor"></a>sbt</h3> 
+    <p>The fastest way to create a new project compiled by Dotty is using <a href="http://www.scala-sbt.org/">sbt (1.1.4+)</a></p> 
+    <p>Create a simple Dotty project:</p> 
+    <pre><code class="language-bash">$ sbt new lampepfl/dotty.g8
+</code></pre> 
+    <p>Or a Dotty project that cross compiles with Scala 2:</p> 
+    <pre><code class="language-bash">$ sbt new lampepfl/dotty-cross.g8
+</code></pre> 
+    <p>You can then start a Dotty REPL directly from your sbt project:</p> 
+    <pre><code class="language-bash">$ sbt
+&gt; console
+scala&gt;
+</code></pre> 
+    <p>For more information, see the <a href="https://github.com/lampepfl/dotty-example-project">Dotty Example Project</a></p> 
+    <h3><a href="#ide-support" id="ide-support" class="anchor"></a>IDE support</h3> 
+    <p>Start using the Dotty IDE in any Dotty project by following the <a href="./ide-support.md">IDE guide</a>.</p> 
+    <h3><a href="#standalone-installation" id="standalone-installation" class="anchor"></a>Standalone installation</h3> 
+    <p>Releases are available for download on the <a href="https://github.com/lampepfl/dotty/releases">Releases Section</a> of the Dotty repository. Releases include three executables: <code>scalac</code> the Dotty compiler, <code>scalad</code> the <a href="./dottydoc.md">Dotty Documentation tool</a> and <code>scala</code> the Dotty REPL.</p> 
+    <pre><code>.
+└── bin
+ &nbsp;&nbsp; ├── scalac
+ &nbsp;&nbsp; ├── scalad
+ &nbsp;&nbsp; └── scala
+</code></pre> 
+    <p>Add these executables to your <code>PATH</code> and you will be able to run the corresponding commands directly from your console:</p> 
+    <pre><code class="language-bash"># Compile code using Dotty
+$ scalac HelloWorld.scala
+
+# Run it with the proper classpath
+$ scala HelloWorld
+
+# Start a Dotty REPL
+$ scala
+Starting dotty REPL...
+scala&gt;
+</code></pre> 
+    <p>If you're a Mac user, we also provide a <a href="https://brew.sh/">homebrew</a> package that can be installed by running:</p> 
+    <pre><code class="language-bash">brew install lampepfl/brew/dotty
+</code></pre> 
+    <p>In case you have already installed Dotty via brew, you should instead update it:</p> 
+    <pre><code class="language-bash">brew upgrade dotty
+</code></pre> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../scripts/pages.js"></script><script type="text/javascript" src="../../scripts/main.js"></script></body></html>

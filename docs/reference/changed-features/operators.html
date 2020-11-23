@@ -1,0 +1,124 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Rules for Operators</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/changed-features/operators.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="../../Other Changed Features/index.html">Other Changed Features</a>/<a href="operators.html">Rules for Operators</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>Rules for Operators</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/reference/changed-features/operators.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>The rules for infix operators have changed in some parts:</p> 
+    <p>First, an alphanumeric method can be used as an infix operator only if its definition carries an <code>@infix</code> annotation. Second, it is recommended (but not enforced) to augment definitions of symbolic operators with <code>@targetName</code> annotations. Finally, a syntax change allows infix operators to be written on the left in a multi-line expression.</p> 
+    <h2><a href="#the-infix-annotation" id="the-infix-annotation" class="anchor"></a>The @infix Annotation</h2> 
+    <p>An <code>@infix</code> annotation on a method definition allows using the method as an infix operation. Example:</p> 
+    <pre><code class="language-scala">import scala.annotation.{infix, targetName}
+
+trait MultiSet[T] {
+
+  @infix
+  def union(other: MultiSet[T]): MultiSet[T]
+
+  def difference(other: MultiSet[T]): MultiSet[T]
+
+  @targetName("intersection")
+  def *(other: MultiSet[T]): MultiSet[T]
+}
+
+val s1, s2: MultiSet[Int]
+
+s1 union s2         // OK
+s1 `union` s2       // also OK but unusual
+s1.union(s2)        // also OK
+
+s1.difference(s2)   // OK
+s1 `difference` s2  // OK
+s1 difference s2    // gives a deprecation warning
+
+s1 * s2             // OK
+s1 `*` s2           // also OK, but unusual
+s1.*(s2)            // also OK, but unusual
+</code></pre> 
+    <p>Infix operations involving alphanumeric operators are deprecated, unless one of the following conditions holds:</p> 
+    <ul> 
+     <li>the operator definition carries an <code>@infix</code> annotation, or</li> 
+     <li>the operator was compiled with Scala 2, or</li> 
+     <li>the operator is followed by an opening brace.</li> 
+    </ul> 
+    <p>An alphanumeric operator is an operator consisting entirely of letters, digits, the <code>$</code> and <code>_</code> characters, or any unicode character <code>c</code> for which <code>java.lang.Character.isIdentifierPart(c)</code> returns <code>true</code>.</p> 
+    <p>Infix operations involving symbolic operators are always allowed, so <code>@infix</code> is redundant for methods with symbolic names.</p> 
+    <p>The <code>@infix</code> annotation can also be given to a type:</p> 
+    <pre><code>@infix type or[X, Y]
+val x: String or Int = ...
+</code></pre> 
+    <h3><a href="#motivation" id="motivation" class="anchor"></a>Motivation</h3> 
+    <p>The purpose of the <code>@infix</code> annotation is to achieve consistency across a code base in how a method or type is applied. The idea is that the author of a method decides whether that method should be applied as an infix operator or in a regular application. Use sites then implement that decision consistently.</p> 
+    <h3><a href="#details" id="details" class="anchor"></a>Details</h3> 
+    <ol> 
+     <li> <p><code>@infix</code> is defined in package <code>scala.annotation</code>.</p> </li> 
+     <li> <p>If a method overrides another, their infix annotations must agree. Either both are annotated with <code>@infix</code>, or none of them are.</p> </li> 
+     <li> <p><code>@infix</code> annotations can be given to method definitions. The first non-receiver parameter list of an <code>@infix</code> method must define exactly one parameter. Examples:</p> <pre><code class="language-scala">@infix def op(x: S): R                  // ok
+@infix def op[T](x: T)(y: S): R         // ok
+@infix def op[T](x: T, y: S): R         // error: two parameters
+
+@infix def (x: A) op (y: B): R          // ok
+@infix def (x: A) op (y1: B, y2: B): R  // error: two parameters
+</code></pre> </li> 
+     <li> <p><code>@infix</code> annotations can also be given to type, trait or class definitions that have exactly two type parameters. An infix type like</p> <pre><code class="language-scala">@infix type op[X, Y]
+</code></pre> <p>can be applied using infix syntax, i.e. <code>A op B</code>.</p> </li> 
+     <li>To smooth migration to Scala 3.0, alphanumeric operators will only be deprecated from Scala 3.1 onwards, or if the <code>-source 3.1</code> option is given in Dotty/Scala 3.</li> 
+    </ol> 
+    <h2><a href="#the-targetname-annotation" id="the-targetname-annotation" class="anchor"></a>The @targetName Annotation</h2> 
+    <p>It is recommended that definitions of symbolic operators carry a <a href="../other-new-features/targetName.html">@targetName annotation</a> that provides an encoding of the operator with an alphanumeric name. This has several benefits:</p> 
+    <ul> 
+     <li>It helps interoperability between Scala and other languages. One can call a Scala-defined symbolic operator from another language using its target name, which avoids having to remember the low-level encoding of the symbolic name.</li> 
+     <li>It helps legibility of stacktraces and other runtime diagnostics, where the user-defined alphanumeric name will be shown instead of the low-level encoding.</li> 
+     <li>It serves as a documentation tool by providing an alternative regular name as an alias of a symbolic operator. This makes the definition also easier to find in a search.</li> 
+    </ul> 
+    <h2><a href="#syntax-change" id="syntax-change" class="anchor"></a>Syntax Change</h2> 
+    <p>Infix operators can now appear at the start of lines in a multi-line expression. Examples:</p> 
+    <pre><code class="language-scala">val str = "hello"
+  ++ " world"
+  ++ "!"
+
+def condition =
+     x &gt; 0
+  || xs.exists(_ &gt; 0)
+  || xs.isEmpty
+</code></pre> 
+    <p>Previously, these expressions would have been rejected, since the compiler's semicolon inference would have treated the continuations <code>++ " world"</code> or <code>|| xs.isEmpty</code> as separate statements.</p> 
+    <p>To make this syntax work, the rules are modified to not infer semicolons in front of leading infix operators. A <em>leading infix operator</em> is - a symbolic identifier such as <code>+</code>, or <code>approx_==</code>, or an identifier in backticks, - that starts a new line, - that precedes a token on the same line that can start an expression, - and that is immediately followed by at least one space character <code>' '</code>.</p> 
+    <p>Example:</p> 
+    <pre><code class="language-scala">    freezing
+  | boiling
+</code></pre> 
+    <p>This is recognized as a single infix operation. Compare with:</p> 
+    <pre><code class="language-scala">    freezing
+  !boiling
+</code></pre> 
+    <p>This is seen as two statements, <code>freezing</code> and <code>!boiling</code>. The difference is that only the operator in the first example is followed by a space.</p> 
+    <p>Another example:</p> 
+    <pre><code class="language-scala">  println("hello")
+  ???
+  ??? match { case 0 =&gt; 1 }
+</code></pre> 
+    <p>This code is recognized as three different statements. <code>???</code> is syntactically a symbolic identifier, but neither of its occurrences is followed by a space and a token that can start an expression.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

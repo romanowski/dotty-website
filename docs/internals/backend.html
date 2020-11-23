@@ -1,0 +1,103 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Backend Internals</title><link rel="shortcut icon" type="image/x-icon" href="../../favicon.ico"></link><script type="text/javascript" src="../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../styles/nord-light.css"></link><link rel="stylesheet" href="../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/diagram.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../styles/filter-bar.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../css/dottydoc.css"></link><link rel="stylesheet" href="../../css/color-brewer.css"></link><script type="text/javascript" src="../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/internals/backend.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../index.html"></a>/<a href="../Internals/index.html">Internals</a>/<a href="backend.html">Backend Internals</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Backend Internals"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/internals/backend.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>The code for the backend is split up by functionality and assembled in the object <code>GenBCode</code>.</p> 
+    <pre><code>object GenBCode    --- [defines] --&gt;        PlainClassBuilder       GenBCode also defines class BCodePhase, the compiler phase
+     |                                              |
+ [extends]                                      [extends]
+     |                                              |
+BCodeSyncAndTry    ----------------&gt;        SyncAndTryBuilder
+     |                                              |
+BCodeBodyBuilder   ----------------&gt;        PlainBodyBuilder
+     |                                              |
+BCodeSkelBuilder   ----------------&gt;        PlainSkelBuilder
+     |                                       /      |       \
+ BCodeHelpers      ----------------&gt;  BCClassGen BCAnnotGen ...  (more components)
+     |      \       \
+     |       \       \-------------&gt;  helper methods
+     |        \       \------------&gt;  JMirrorBuilder, JBeanInfoBuilder (uses some components, e.g. BCInnerClassGen)
+     |         \
+     |   BytecodeWriters  ---------&gt;        methods and classes to write byte code files
+     |
+ BCodeTypes        ----------------&gt;        maps and fields for common BTypes, class Tracked, methods to collect information on classes, tests for BTypes (conforms), ...
+     |
+BCodeIdiomatic     ----------------&gt;        utilities for code generation, e.g. genPrimitiveArithmetic
+     |
+  BCodeGlue        ----------------&gt;        BType class, predefined BTypes
+</code></pre> 
+    <h3><a href="#data-flow" id="data-flow" class="anchor"></a>Data Flow</h3> 
+    <p>Compiler creates a <code>BCodePhase</code>, calls <code>runOn(compilationUnits)</code>.</p> 
+    <ul> 
+     <li>initializes fields of <code>GenBCode</code> defined in <code>BCodeTypes</code> (BType maps, common BTypes like <code>StringReference</code>)</li> 
+     <li>initialize <code>primitives</code> map defined in <code>scalaPrimitives</code> (maps primitive members, like <code>int.+</code>, to bytecode instructions)</li> 
+     <li>creates <code>BytecodeWriter</code>, <code>JMirrorBuilder</code> and <code>JBeanInfoBuilder</code> instances (on each compiler run)</li> 
+     <li><code>buildAndSendToDisk(units)</code>: uses work queues, see below. 
+      <ul> 
+       <li><code>BCodePhase.addToQ1</code> adds class trees to <code>q1</code></li> 
+       <li><code>Worker1.visit</code> creates ASM <code>ClassNodes</code>, adds to <code>q2</code>. It creates one <code>PlainClassBuilder</code> for each compilation unit.</li> 
+       <li><code>Worker2.addToQ3</code> adds byte arrays (one for each class) to <code>q3</code></li> 
+       <li><code>BCodePhase.drainQ3</code> writes byte arrays to disk</li> 
+      </ul> </li> 
+    </ul> 
+    <h3><a href="#architecture" id="architecture" class="anchor"></a>Architecture</h3> 
+    <p>The architecture of <code>GenBCode</code> is the same as in Scalac. It can be partitioned into weakly coupled components (called "subsystems" below):</p> 
+    <h4><a href="#a-the-queue-subsystem" id="a-the-queue-subsystem" class="anchor"></a>(a) The queue subsystem</h4> 
+    <p>Queues mediate between processors, queues don't know what each processor does.</p> 
+    <p>The first queue contains AST trees for compilation units, the second queue contains ASM ClassNodes, and finally the third queue contains byte arrays, ready for serialization to disk.</p> 
+    <p>Currently the queue subsystem is all sequential, but as can be seen in <a href="http://magarciaepfl.github.io/scala/">http://magarciaepfl.github.io/scala/</a> the above design enables overlapping (a.1) building of <code>ClassNodes</code>, (a.2) intra-method optimizations, and (a.3) serialization to disk.</p> 
+    <p>This subsystem is described in detail in <code>GenBCode.scala</code></p> 
+    <h4><a href="#b-bytecode-level-types-btype" id="b-bytecode-level-types-btype" class="anchor"></a>(b) Bytecode-level types, BType</h4> 
+    <p>The previous bytecode emitter goes to great lengths to reason about bytecode-level types in terms of Symbols.</p> 
+    <p><code>GenBCode</code> uses <code>BType</code> as a more direct representation. A <code>BType</code> is immutable, and a value class (once the rest of GenBCode is merged from <a href="http://magarciaepfl.github.io/scala/">http://magarciaepfl.github.io/scala/</a> ).</p> 
+    <p>Whether value class or not, its API is the same. That API doesn't reach into the type checker. Instead, each method on a <code>BType</code> answers a question that can be answered based on the <code>BType</code> itself. Sounds too simple to be good? It's a good building block, that's what it is.</p> 
+    <p>The internal representation of a <code>BType</code> is based on what the JVM uses: internal names (e.g. <code>Ljava/lang/String;</code> ) and method descriptors; as defined in the JVM spec (that's why they aren't documented in <code>GenBCode</code>, just read the <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/">JVM 8 spec</a>).</p> 
+    <p>All things <code>BType</code> can be found in <code>BCodeGlue.scala</code></p> 
+    <h4><a href="#c-utilities-offering-a-more-high-level-api-to-bytecode-emission" id="c-utilities-offering-a-more-high-level-api-to-bytecode-emission" class="anchor"></a>(c) Utilities offering a more "high-level" API to bytecode emission</h4> 
+    <p>Bytecode can be emitted one opcode at a time, but there are recurring patterns that call for a simpler API.</p> 
+    <p>For example, when emitting a load-constant, a dedicated instruction exists for emitting load-zero. Similarly, emitting a switch can be done according to one of two strategies.</p> 
+    <p>All these utilities are encapsulated in file <code>BCodeIdiomatic.scala</code>. They know nothing about the type checker (because, just between us, they don't need to).</p> 
+    <h4><a href="#d-mapping-between-type-checker-types-and-btypes" id="d-mapping-between-type-checker-types-and-btypes" class="anchor"></a>(d) Mapping between type-checker types and BTypes</h4> 
+    <p>So that (c) can remain oblivious to what AST trees contain, some bookkeepers are needed:</p> 
+    <ul> 
+     <li>Tracked: for a bytecode class (BType), its superclass, directly declared interfaces, and inner classes.</li> 
+    </ul> 
+    <p>To understand how it's built, see:</p> 
+    <pre><code class="language-scala">final def exemplar(csym0: Symbol): Tracked = { ... }
+</code></pre> 
+    <p>Details in <code>BCodeTypes.scala</code></p> 
+    <h4><a href="#e-more-high-level-utilities-for-bytecode-emission" id="e-more-high-level-utilities-for-bytecode-emission" class="anchor"></a>(e) More "high-level" utilities for bytecode emission</h4> 
+    <p>In the spirit of <code>BCodeIdiomatic</code>, utilities are added in <code>BCodeHelpers</code> for emitting:</p> 
+    <ul> 
+     <li>bean info class</li> 
+     <li>mirror class and their forwarders</li> 
+     <li>android-specific creator classes</li> 
+     <li>annotations</li> 
+    </ul> 
+    <h4><a href="#f-building-an-asm-classnode-given-an-ast-typedef" id="f-building-an-asm-classnode-given-an-ast-typedef" class="anchor"></a>(f) Building an ASM ClassNode given an AST TypeDef</h4> 
+    <p>It's done by <code>PlainClassBuilder</code>(see <code>GenBCode.scala</code>).</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../scripts/pages.js"></script><script type="text/javascript" src="../../scripts/main.js"></script></body></html>

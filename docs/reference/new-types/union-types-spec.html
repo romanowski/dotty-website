@@ -1,0 +1,106 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Union Types - More Details</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/new-types/union-types-spec.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="union-types-spec.html">Union Types - More Details</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Union Types - More Details"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/reference/new-types/union-types-spec.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <h2><a href="#syntax" id="syntax" class="anchor"></a>Syntax</h2> 
+    <p>Syntactically, unions follow the same rules as intersections, but have a lower precedence, see <a href="./intersection-types-spec.md">Intersection Types - More Details</a>.</p> 
+    <h3><a href="#interaction-with-pattern-matching-syntax" id="interaction-with-pattern-matching-syntax" class="anchor"></a>Interaction with pattern matching syntax</h3> 
+    <p><code>|</code> is also used in pattern matching to separate pattern alternatives and has lower precedence than <code>:</code> as used in typed patterns, this means that:</p> 
+    <pre><code class="language-scala">case _: A | B =&gt; ...
+</code></pre> 
+    <p>is still equivalent to:</p> 
+    <pre><code class="language-scala">case (_: A) | B =&gt; ...
+</code></pre> 
+    <p>and not to:</p> 
+    <pre><code class="language-scala">case _: (A | B) =&gt; ...
+</code></pre> 
+    <h2><a href="#subtyping-rules" id="subtyping-rules" class="anchor"></a>Subtyping Rules</h2> 
+    <ul> 
+     <li><code>A</code> is always a subtype of <code>A | B</code> for all <code>A</code>, <code>B</code>.</li> 
+     <li>If <code>A &lt;: C</code> and <code>B &lt;: C</code> then <code>A | B &lt;: C</code></li> 
+     <li>Like <code>&amp;</code>, <code>|</code> is commutative and associative: <pre><code class="language-scala">A | B =:= B | A
+A | (B | C) =:= (A | B) | C
+</code></pre> </li> 
+     <li><code>&amp;</code> is distributive over <code>|</code>: <pre><code class="language-scala">A &amp; (B | C) =:= A &amp; B | A &amp; C
+</code></pre> </li> 
+    </ul> 
+    <p>From these rules it follows that the <em>least upper bound</em> (lub) of a set of types is the union of these types. This replaces the <a href="https://www.scala-lang.org/files/archive/spec/2.12/03-types.html#least-upper-bounds-and-greatest-lower-bounds">definition of least upper bound in the Scala 2 specification</a>.</p> 
+    <h2><a href="#motivation" id="motivation" class="anchor"></a>Motivation</h2> 
+    <p>The primary reason for introducing union types in Scala is that they allow us to guarantee that for every set of types, we can always form a finite lub. This is both useful in practice (infinite lubs in Scala 2 were approximated in an ad-hoc way, resulting in imprecise and sometimes incredibly long types) and in theory (the type system of Scala 3 is based on the <a href="https://infoscience.epfl.ch/record/227176/files/soundness_oopsla16.pdf">DOT calculus</a>, which has union types).</p> 
+    <p>Additionally, union types are a useful construct when trying to give types to existing dynamically typed APIs, this is why they're <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#union-types">an integral part of TypeScript</a> and have even been <a href="https://github.com/scala-js/scala-js/blob/master/library/src/main/scala/scala/scalajs/js/Union.scala">partially implemented in Scala.js</a>.</p> 
+    <h2><a href="#join-of-a-union-type" id="join-of-a-union-type" class="anchor"></a>Join of a union type</h2> 
+    <p>In some situation described below, a union type might need to be widened to a non-union type, for this purpose we define the <em>join</em> of a union type <code>T1 | ... | Tn</code> as the smallest intersection type of base class instances of <code>T1</code>,...,<code>Tn</code>. Note that union types might still appear as type arguments in the resulting type, this guarantees that the join is always finite.</p> 
+    <h3><a href="#example" id="example" class="anchor"></a>Example</h3> 
+    <p>Given</p> 
+    <pre><code class="language-scala">trait C[+T]
+trait D
+trait E
+class A extends C[A] with D
+class B extends C[B] with D with E
+</code></pre> 
+    <p>The join of <code>A | B</code> is <code>C[A | B] &amp; D</code></p> 
+    <h2><a href="#type-inference" id="type-inference" class="anchor"></a>Type inference</h2> 
+    <p>When inferring the result type of a definition (<code>val</code>, <code>var</code>, or <code>def</code>) and the type we are about to infer is a union type, then we replace it by its join. Similarly, when instantiating a type argument, if the corresponding type parameter is not upper-bounded by a union type and the type we are about to instantiate is a union type, we replace it by its join. This mirrors the treatment of singleton types which are also widened to their underlying type unless explicitly specified. The motivation is the same: inferring types which are "too precise" can lead to unintuitive typechecking issues later on.</p> 
+    <p>Note: Since this behavior limits the usability of union types, it might be changed in the future. For example by not widening unions that have been explicitly written down by the user and not inferred, or by not widening a type argument when the corresponding type parameter is covariant. See <a href="https://github.com/lampepfl/dotty/pull/2330">#2330</a> and <a href="https://github.com/lampepfl/dotty/issues/4867">#4867</a> for further discussions.</p> 
+    <h3><a href="#example-1" id="example-1" class="anchor"></a>Example</h3> 
+    <pre><code class="language-scala">import scala.collection.mutable.ListBuffer
+val x = ListBuffer(Right("foo"), Left(0))
+val y: ListBuffer[Either[Int, String]] = x
+</code></pre> 
+    <p>This code typechecks because the inferred type argument to <code>ListBuffer</code> in the right-hand side of <code>x</code> was <code>Left[Int, Nothing] | Right[Nothing, String]</code> which was widened to <code>Either[Int, String]</code>. If the compiler hadn't done this widening, the last line wouldn't typecheck because <code>ListBuffer</code> is invariant in its argument.</p> 
+    <h2><a href="#members" id="members" class="anchor"></a>Members</h2> 
+    <p>The members of a union type are the members of its join.</p> 
+    <h3><a href="#example-2" id="example-2" class="anchor"></a>Example</h3> 
+    <p>The following code does not typecheck, because <code>hello</code> is not a member of <code>AnyRef</code> which is the join of <code>A | B</code>.</p> 
+    <pre><code class="language-scala">trait A { def hello: String }
+trait B { def hello: String }
+
+def test(x: A | B) = x.hello // error: value `hello` is not a member of A | B
+</code></pre> 
+    <p>On the otherhand, the following would be allowed</p> 
+    <pre><code class="language-scala">trait C { def hello: String }
+trait A extends C with D 
+trait B extends C with E
+
+def test(x: A | B) = x.hello // ok as `hello` is a member of the join of A | B which is C
+</code></pre> 
+    <h2><a href="#exhaustivity-checking" id="exhaustivity-checking" class="anchor"></a>Exhaustivity checking</h2> 
+    <p>If the selector of a pattern match is a union type, the match is considered exhaustive if all parts of the union are covered.</p> 
+    <h2><a href="#erasure" id="erasure" class="anchor"></a>Erasure</h2> 
+    <p>The erased type for <code>A | B</code> is the <em>erased least upper bound</em> of the erased types of <code>A</code> and <code>B</code>. Quoting from the documentation of <code>TypeErasure#erasedLub</code>, the erased lub is computed as follows:</p> 
+    <ul> 
+     <li>if both argument are arrays of objects, an array of the erased lub of the element types</li> 
+     <li>if both arguments are arrays of same primitives, an array of this primitive</li> 
+     <li>if one argument is array of primitives and the other is array of objects, Object</li> 
+     <li>if one argument is an array, Object</li> 
+     <li>otherwise a common superclass or trait S of the argument classes, with the following two properties: 
+      <ul> 
+       <li>S is minimal: no other common superclass or trait derives from S</li> 
+       <li>S is last : in the linearization of the first argument type <code>|A|</code> there are no minimal common superclasses or traits that come after S. The reason to pick last is that we prefer classes over traits that way, which leads to more predictable bytecode and (?) faster dynamic dispatch.</li> 
+      </ul> </li> 
+    </ul> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

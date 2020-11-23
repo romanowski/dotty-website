@@ -1,0 +1,88 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Main Methods</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/changed-features/main-functions.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="../../Other Changed Features/index.html">Other Changed Features</a>/<a href="main-functions.html">Main Methods</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Main Methods"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/reference/changed-features/main-functions.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>Scala 3 offers a new way to define programs that can be invoked from the command line: A <code>@main</code> annotation on a method turns this method into an executable program. Example:</p> 
+    <pre><code class="language-scala">@main def happyBirthday(age: Int, name: String, others: String*) = {
+  val suffix =
+    (age % 100) match {
+      case 11 | 12 | 13 =&gt; "th"
+      case _ =&gt;
+        (age % 10) match {
+          case 1 =&gt; "st"
+          case 2 =&gt; "nd"
+          case 3 =&gt; "rd"
+          case _ =&gt; "th"
+        }
+    }
+  val bldr = new StringBuilder(s"Happy $age$suffix birthday, $name")
+  for other &lt;- others do bldr.append(" and ").append(other)
+  bldr.toString
+}
+</code></pre> 
+    <p>This would generate a main program <code>happyBirthday</code> that could be called like this</p> 
+    <pre><code>&gt; scala happyBirthday 23 Lisa Peter
+Happy 23rd Birthday, Lisa and Peter!
+</code></pre> 
+    <p>A <code>@main</code> annotated method can be written either at the top-level or in a statically accessible object. The name of the program is in each case the name of the method, without any object prefixes. The <code>@main</code> method can have an arbitrary number of parameters. For each parameter type there must be an instance of the <code>scala.util.FromString</code> type class that is used to convert an argument string to the required parameter type. The parameter list of a main method can end in a repeated parameter that then takes all remaining arguments given on the command line.</p> 
+    <p>The program implemented from a <code>@main</code> method checks that there are enough arguments on the command line to fill in all parameters, and that argument strings are convertible to the required types. If a check fails, the program is terminated with an error message.</p> 
+    <p>Examples:</p> 
+    <pre><code>&gt; scala happyBirthday 22
+Illegal command line after first argument: more arguments expected
+
+&gt; scala happyBirthday sixty Fred
+Illegal command line: java.lang.NumberFormatException: For input string: "sixty"
+</code></pre> 
+    <p>The Scala compiler generates a program from a <code>@main</code> method <code>f</code> as follows:</p> 
+    <ul> 
+     <li>It creates a class named <code>f</code> in the package where the <code>@main</code> method was found</li> 
+     <li>The class has a static method <code>main</code> with the usual signature. It takes an <code>Array[String]</code> as argument and returns <code>Unit</code>.</li> 
+     <li>The generated <code>main</code> method calls method <code>f</code> with arguments converted using methods in the <code>scala.util.CommandLineParser</code> object.</li> 
+    </ul> 
+    <p>For instance, the <code>happyBirthDay</code> method above would generate additional code equivalent to the following class:</p> 
+    <pre><code class="language-scala">final class happyBirthday {
+  import scala.util.{CommandLineParser =&gt; CLP}
+  &lt;static&gt; def main(args: Array[String]): Unit =
+    try
+      happyBirthday(
+          CLP.parseArgument[Int](args, 0),
+          CLP.parseArgument[String](args, 1),
+          CLP.parseRemainingArguments[String](args, 2))
+    catch {
+      case error: CLP.ParseError =&gt; CLP.showError(error)
+    }
+}
+</code></pre> 
+    <p><strong>Note</strong>: The <code>&lt;static&gt;</code> modifier above expresses that the <code>main</code> method is generated as a static method of class <code>happyBirthDay</code>. It is not available for user programs in Scala. Regular "static" members are generated in Scala using objects instead.</p> 
+    <p><code>@main</code> methods are the recommended scheme to generate programs that can be invoked from the command line in Scala 3. They replace the previous scheme to write program as objects with a special <code>App</code> parent class. In Scala 2, <code>happyBirthday</code> could be written also like this:</p> 
+    <pre><code class="language-scala">object happyBirthday extends App {
+  // needs by-hand parsing of arguments vector
+  ...
+}
+</code></pre> 
+    <p>The previous functionality of <code>App</code>, which relied on the "magic" <code>DelayedInit</code> trait, is no longer available. <code>App</code> still exists in limited form for now, but it does not support command line arguments and will be deprecated in the future. If programs need to cross-build between Scala 2 and Scala 3, it is recommended to use an explicit <code>main</code> method with an <code>Array[String]</code> argument instead.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

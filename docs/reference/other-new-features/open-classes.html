@@ -1,0 +1,81 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Open Classes</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/other-new-features/open-classes.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="../../Other New Features/index.html">Other New Features</a>/<a href="open-classes.html">Open Classes</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Open Classes"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/reference/other-new-features/open-classes.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>An <code>open</code> modifier on a class signals that the class is planned for extensions. Example:</p> 
+    <pre><code class="language-scala">// File Writer.scala
+package p
+
+open class Writer[T] {
+
+  /** Sends to stdout, can be overridden */
+  def send(x: T) = println(x)
+
+  /** Sends all arguments using `send` */
+  def sendAll(xs: T*) = xs.foreach(send)
+}
+
+// File EncryptedWriter.scala
+package p
+
+class EncryptedWriter[T: Encryptable] extends Writer[T] {
+  override def send(x: T) = super.send(encrypt(x))
+}
+</code></pre> 
+    <p>An open class typically comes with some documentation that describes the internal calling patterns between methods of the class as well as hooks that can be overridden. We call this the <em>extension contract</em> of the class. It is different from the <em>external contract</em> between a class and its users.</p> 
+    <p>Classes that are not open can still be extended, but only if at least one of two alternative conditions is met:</p> 
+    <ul> 
+     <li> <p>The extending class is in the same source file as the extended class. In this case, the extension is usually an internal implementation matter.</p> </li> 
+     <li>The language feature <code>adhocExtensions</code> is enabled for the extending class. This is typically enabled by an import statement in the source file of the extension: <pre><code class="language-scala">import scala.language.adhocExtensions
+</code></pre> <p>Alternatively, the feature can be enabled by the command line option <code>-language:adhocExtensions</code>. If the feature is not enabled, the compiler will issue a "feature" warning. For instance, if the <code>open</code> modifier on class <code>Writer</code> is dropped, compiling <code>EncryptedWriter</code> would produce a warning:</p> <pre><code>-- Feature Warning: EncryptedWriter.scala:6:14 ----
+  |class EncryptedWriter[T: Encryptable] extends Writer[T]
+  |                                              ^
+  |Unless class Writer is declared 'open', its extension in a separate file should be enabled
+  |by adding the import clause 'import scala.language.adhocExtensions'
+  |or by setting the compiler option -language:adhocExtensions.
+</code></pre> </li> 
+    </ul> 
+    <h3><a href="#motivation" id="motivation" class="anchor"></a>Motivation</h3> 
+    <p>When writing a class, there are three possible expectations of extensibility:</p> 
+    <ol> 
+     <li> <p>The class is intended to allow extensions. This means one should expect a carefully worked out and documented extension contract for the class.</p> </li> 
+     <li> <p>Extensions of the class are forbidden, for instance to make correctness or security guarantees.</p> </li> 
+     <li>There is no firm decision either way. The class is not <em>a priori</em> intended for extensions, but if others find it useful to extend on an <em>ad-hoc</em> basis, let them go ahead. However, they are on their own in this case. There is no documented extension contract, and future versions of the class might break the extensions (by rearranging internal call patterns, for instance).</li> 
+    </ol> 
+    <p>The three cases are clearly distinguished by using <code>open</code> for (1), <code>final</code> for (2) and no modifier for (3).</p> 
+    <p>It is good practice to avoid <em>ad-hoc</em> extensions in a code base, since they tend to lead to fragile systems that are hard to evolve. But there are still some situations where these extensions are useful: for instance, to mock classes in tests, or to apply temporary patches that add features or fix bugs in library classes. That's why <em>ad-hoc</em> extensions are permitted, but only if there is an explicit opt-in via a language feature import.</p> 
+    <h3><a href="#details" id="details" class="anchor"></a>Details</h3> 
+    <ul> 
+     <li><code>open</code> is a soft modifier. It is treated as a normal identifier unless it is in modifier position.</li> 
+     <li>An <code>open</code> class cannot be <code>final</code> or <code>sealed</code>.</li> 
+     <li>Traits or <code>abstract</code> classes are always <code>open</code>, so <code>open</code> is redundant for them.</li> 
+    </ul> 
+    <h3><a href="#relationship-with-sealed" id="relationship-with-sealed" class="anchor"></a>Relationship with <code>sealed</code></h3> 
+    <p>A class that is neither <code>abstract</code> nor <code>open</code> is similar to a <code>sealed</code> class: it can still be extended, but only in the same compilation unit. The difference is what happens if an extension of the class is attempted in another compilation unit. For a <code>sealed</code> class, this is an error, whereas for a simple non-open class, this is still permitted provided the <code>adhocExtensions</code> feature is enabled, and it gives a warning otherwise.</p> 
+    <h3><a href="#migration" id="migration" class="anchor"></a>Migration</h3> 
+    <p><code>open</code> is a new modifier in Scala 3. To allow cross compilation between Scala 2.13 and Scala 3.0 without warnings, the feature warning for ad-hoc extensions is produced only under <code>-source 3.1</code>. It will be produced by default from Scala 3.1 on.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

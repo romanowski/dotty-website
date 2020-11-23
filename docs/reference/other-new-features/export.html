@@ -1,0 +1,134 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Export Clauses</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/other-new-features/export.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="../../Other New Features/index.html">Other New Features</a>/<a href="export.html">Export Clauses</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Export Clauses"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/reference/other-new-features/export.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>An export clause defines aliases for selected members of an object. Example:</p> 
+    <pre><code class="language-scala">class BitMap
+class InkJet
+
+class Printer {
+  type PrinterType
+  def print(bits: BitMap): Unit = ???
+  def status: List[String] = ???
+}
+
+class Scanner {
+  def scan(): BitMap = ???
+  def status: List[String] = ???
+}
+
+class Copier {
+  private val printUnit = new Printer { type PrinterType = InkJet }
+  private val scanUnit = new Scanner
+
+  export scanUnit.scan
+  export printUnit.{status =&gt; _, _}
+
+  def status: List[String] = printUnit.status ++ scanUnit.status
+}
+</code></pre> 
+    <p>The two <code>export</code> clauses define the following <em>export aliases</em> in class <code>Copier</code>:</p> 
+    <pre><code class="language-scala">final def scan(): BitMap            = scanUnit.scan()
+final def print(bits: BitMap): Unit = printUnit.print(bits)
+final type PrinterType              = printUnit.PrinterType
+</code></pre> 
+    <p>They can be accessed inside <code>Copier</code> as well as from outside:</p> 
+    <pre><code class="language-scala">val copier = new Copier
+copier.print(copier.scan())
+</code></pre> 
+    <p>An export clause has the same format as an import clause. Its general form is:</p> 
+    <pre><code class="language-scala">export path . { sel_1, ..., sel_n }
+export given path . { sel_1, ..., sel_n }
+</code></pre> 
+    <p>It consists of a qualifier expression <code>path</code>, which must be a stable identifier, followed by one or more selectors <code>sel_i</code> that identify what gets an alias. Selectors can be of one of the following forms:</p> 
+    <ul> 
+     <li>A <em>simple selector</em> <code>x</code> creates aliases for all eligible members of <code>path</code> that are named <code>x</code>.</li> 
+     <li>A <em>renaming selector</em> <code>x =&gt; y</code> creates aliases for all eligible members of <code>path</code> that are named <code>x</code>, but the alias is named <code>y</code> instead of <code>x</code>.</li> 
+     <li>An <em>omitting selector</em> <code>x =&gt; _</code> prevents <code>x</code> from being aliased by a subsequent wildcard selector.</li> 
+     <li>A <em>wildcard selector</em> creates aliases for all eligible members of <code>path</code> except for synthetic members generated by the compiler and those members that are named by a previous simple, renaming, or omitting selector.</li> 
+    </ul> 
+    <p>A member is <em>eligible</em> if all of the following holds:</p> 
+    <ul> 
+     <li>its owner is not a base class of the class<a href="#note_class">(*)</a> containing the export clause,</li> 
+     <li>the member does not override a concrete definition that has as owner a base class of the class containing the export clause.</li> 
+     <li>it is accessible at the export clause,</li> 
+     <li>it is not a constructor, nor the (synthetic) class part of an object,</li> 
+     <li>it is a given instance (or an old-style <code>implicit</code> value) if and only if the export is tagged with <code>given</code>.</li> 
+    </ul> 
+    <p>It is a compile-time error if a simple or renaming selector does not identify any eligible members.</p> 
+    <p>Type members are aliased by type definitions, and term members are aliased by method definitions. Export aliases copy the type and value parameters of the members they refer to. Export aliases are always <code>final</code>. Aliases of given instances are again defined as givens (and aliases of old-style implicits are <code>implicit</code>). Aliases of inline methods or values are again defined <code>inline</code>. There are no other modifiers that can be given to an alias. This has the following consequences for overriding:</p> 
+    <ul> 
+     <li>Export aliases cannot be overridden, since they are final.</li> 
+     <li>Export aliases cannot override concrete members in base classes, since they are not marked <code>override</code>.</li> 
+     <li>However, export aliases can implement deferred members of base classes.</li> 
+    </ul> 
+    <p>Export aliases for public value definitions that are accessed without referring to private values in the qualifier path are marked by the compiler as "stable" and their result types are the singleton types of the aliased definitions. This means that they can be used as parts of stable identifier paths, even though they are technically methods. For instance, the following is OK:</p> 
+    <pre><code class="language-scala">class C { type T }
+object O { val c: C = ... }
+export O.c
+def f: c.T = ...
+</code></pre> 
+    <p><a id="note_class" href=""></a> Export clauses can appear in classes or they can appear at the top-level. An export clause cannot appear as a statement in a block.</p> 
+    <p>(*) Note: Unless otherwise stated, the term "class" in this discussion also includes object and trait definitions.</p> 
+    <h3><a href="#motivation" id="motivation" class="anchor"></a>Motivation</h3> 
+    <p>It is a standard recommendation to prefer composition over inheritance. This is really an application of the principle of least power: Composition treats components as blackboxes whereas inheritance can affect the internal workings of components through overriding. Sometimes the close coupling implied by inheritance is the best solution for a problem, but where this is not necessary the looser coupling of composition is better.</p> 
+    <p>So far, object oriented languages including Scala made it much easier to use inheritance than composition. Inheritance only requires an <code>extends</code> clause whereas composition required a verbose elaboration of a sequence of forwarders. So in that sense, OO languages are pushing programmers to a solution that is often too powerful. Export clauses redress the balance. They make composition relationships as concise and easy to express as inheritance relationships. Export clauses also offer more flexibility than extends clauses since members can be renamed or omitted.</p> 
+    <p>Export clauses also fill a gap opened by the shift from package objects to toplevel definitions. One occasionally useful idiom that gets lost in this shift is a package object inheriting from some class. The idiom is often used in a facade like pattern, to make members of internal compositions available to users of a package. Toplevel definitions are not wrapped in a user-defined object, so they can't inherit anything. However, toplevel definitions can be export clauses, which supports the facade design pattern in a safer and more flexible way.</p> 
+    <h3><a href="#syntax-changes" id="syntax-changes" class="anchor"></a>Syntax changes:</h3> 
+    <pre><code>TemplateStat   ::=  ...
+                 |  Export
+TopStat        ::=  ...
+                 |  Export
+Export         ::=  ‘export’ [‘given’] ImportExpr {‘,’ ImportExpr}
+</code></pre> 
+    <h3><a href="#elaboration-of-export-clauses" id="elaboration-of-export-clauses" class="anchor"></a>Elaboration of Export Clauses</h3> 
+    <p>Export clauses raise questions about the order of elaboration during type checking. Consider the following example:</p> 
+    <pre><code class="language-scala">class B { val c: Int }
+object a { val b = new B }
+export a._
+export b._
+</code></pre> 
+    <p>Is the <code>export b._</code> clause legal? If yes, what does it export? Is it equivalent to <code>export a.b._</code>? What about if we swap the last two clauses?</p> 
+    <pre><code>export b._
+export a._
+</code></pre> 
+    <p>To avoid tricky questions like these, we fix the elaboration order of exports as follows.</p> 
+    <p>Export clauses are processed when the type information of the enclosing object or class is completed. Completion so far consisted of the following steps:</p> 
+    <ol> 
+     <li>Elaborate any annotations of the class.</li> 
+     <li>Elaborate the parameters of the class.</li> 
+     <li>Elaborate the self type of the class, if one is given.</li> 
+     <li>Enter all definitions of the class as class members, with types to be completed on demand.</li> 
+     <li>Determine the types of all parents of the class.</li> 
+    </ol> 
+    <p>With export clauses, the following steps are added:</p> 
+    <ol> 
+     <li>Compute the types of all paths in export clauses in a context logically inside the class but not considering any imports or exports in that class.</li> 
+     <li>Enter export aliases for the eligible members of all paths in export clauses.</li> 
+    </ol> 
+    <p>It is important that steps 6 and 7 are done in sequence: We first compute the types of <em>all</em> paths in export clauses and only after this is done we enter any export aliases as class members. This means that a path of an export clause cannot refer to an alias made available by another export clause of the same class.</p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>

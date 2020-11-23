@@ -1,0 +1,67 @@
+<html><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><title>Implicit Conversions</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/clipboard.js" defer="true"></script><script type="text/javascript" src="../../../scripts/platform-content-handler.js" defer="true"></script><script type="text/javascript" src="../../../scripts/main.js" defer="true"></script><link rel="stylesheet" href="../../../styles/nord-light.css"></link><link rel="stylesheet" href="../../../styles/scalastyle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/diagram.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/search-bar.css"></link><script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="../../../scripts/diagram.js" defer="true"></script><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script type="text/javascript" src="../../../scripts/fast-navigation-loader.js" defer="true"></script><link rel="stylesheet" href="../../../css/bootstrap.min.css"></link><link rel="stylesheet" href="../../../css/dottydoc.css"></link><link rel="stylesheet" href="../../../css/color-brewer.css"></link><script type="text/javascript" src="../../../js/jquery.min.js" defer="true"></script><script type="text/javascript" src="../../../js/bootstrap.min.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id="container"><div id="leftColumn"><div id="logo"><span><img src="../../../project-logo/logo.svg"></img></span><span><div class="projectName">Scala 3</div><div class="projectVersion">3.0.0-M2</div></span></div><div id="paneSearch"></div><nav id="sideMenu"></nav></div><div id="main"><div id="leftToggler"><span class="icon-toggler"></span></div><div id="searchBar"></div><main>
+  <div id="content" pageIds="_.docs/reference/changed-features/implicit-conversions.md////PointingToDeclaration//-1490135309">
+    <div class="breadcrumbs"><a href="../../index.html"></a>/<a href="../../Reference/index.html">Reference</a>/<a href="../../Other Changed Features/index.html">Other Changed Features</a>/<a href="implicit-conversions.html">Implicit Conversions</a></div>
+<html>
+ <head>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin> 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> 
+ </head>
+ <body>
+  <div id="content-wrapper"> 
+   <main class="container"> 
+    <header> 
+     <h1>"Implicit Conversions"</h1> 
+     <div class="byline"> <a href="https://github.com/lampepfl/dotty/edit/master/docs/docs/reference/changed-features/implicit-conversions.md#L"> <i class="far fa-edit"></i> Edit this page on GitHub </a> 
+     </div> 
+    </header> 
+    <p>An <em>implicit conversion</em>, also called <em>view</em>, is a conversion that is applied by the compiler in several situations:</p> 
+    <ol> 
+     <li>When an expression <code>e</code> of type <code>T</code> is encountered, but the compiler needs an expression of type <code>S</code>.</li> 
+     <li>When an expression <code>e.m</code> where <code>e</code> has type <code>T</code> but <code>T</code> defines no member <code>m</code> is encountered.</li> 
+    </ol> 
+    <p>In those cases, the compiler looks in the implicit scope for a conversion that can convert an expression of type <code>T</code> to an expression of type <code>S</code> (or to a type that defines a member <code>m</code> in the second case).</p> 
+    <p>This conversion can be either:</p> 
+    <ol> 
+     <li>An <code>implicit def</code> of type <code>T =&gt; S</code> or <code>(=&gt; T) =&gt; S</code></li> 
+     <li>An implicit value of type <code>scala.Conversion[T, S]</code></li> 
+    </ol> 
+    <p>Defining an implicit conversion will emit a warning unless the import <code>scala.language.implicitConversions</code> is in scope, or the flag <code>-language:implicitConversions</code> is given to the compiler.</p> 
+    <h2><a href="#examples" id="examples" class="anchor"></a>Examples</h2> 
+    <p>The first example is taken from <code>scala.Predef</code>. Thanks to this implicit conversion, it is possible to pass a <code>scala.Int</code> to a Java method that expects a <code>java.lang.Integer</code></p> 
+    <pre><code class="language-scala">import scala.language.implicitConversions
+implicit def int2Integer(x: Int): java.lang.Integer =
+  x.asInstanceOf[java.lang.Integer]
+</code></pre> 
+    <p>The second example shows how to use <code>Conversion</code> to define an <code>Ordering</code> for an arbitrary type, given existing <code>Ordering</code>s for other types:</p> 
+    <pre><code class="language-scala">import scala.language.implicitConversions
+implicit def ordT[T, S](
+  implicit conv: Conversion[T, S],
+           ordS: Ordering[S]
+  ): Ordering[T] = {
+  // `ordS` compares values of type `S`, but we can convert from `T` to `S`
+  (x: T, y: T) =&gt; ordS.compare(x, y)
+}
+
+class A(val x: Int) // The type for which we want an `Ordering`
+
+// Convert `A` to a type for which an `Ordering` is available:
+implicit val AToInt: Conversion[A, Int] = _.x
+
+implicitly[Ordering[Int]] // Ok, exists in the standard library
+implicitly[Ordering[A]] // Ok, will use the implicit conversion from
+                        // `A` to `Int` and the `Ordering` for `Int`.
+</code></pre> 
+    <p><a href="implicit-conversions-spec.html">More details</a></p> 
+   </main> 
+  </div> 
+  <script>
+  ((window.gitter = {}).chat = {}).options = {
+    room: 'lampepfl/dotty'
+  };
+</script> 
+  <script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async defer></script>
+ </body>
+</html>  </div>
+</main><footer><span class="go-to-top-icon"><a href="#container"><span class="icon-vertical_align_top"></span>&nbsp;Back to top</a></span>Generated by&nbsp;<a href="https://github.com/lampepfl/dotty/tree/master/scala3doc"><img src="../../../images/scala3doc_logo.svg" alt="Scala3doc" class="scala3doc_logo"></img></a></footer></div></div><script type="text/javascript" src="../../../scripts/pages.js"></script><script type="text/javascript" src="../../../scripts/main.js"></script></body></html>
